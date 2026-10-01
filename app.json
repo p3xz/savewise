@@ -1,0 +1,1 @@
+{"expo":{"experiments":{"typedRoutes":true},"icon":"./assets/images/icon.png","ios":{"bundleIdentifier":"com.p3xz.savewise","supportsTablet":true},"name":"SaveWise","orientation":"portrait","plugins":["expo-router"],"scheme":"savewise","slug":"savewise","userInterfaceStyle":"light","version":"1.0.0"}}
