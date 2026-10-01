@@ -3,12 +3,17 @@ import { useEffect, useState } from 'react';
 import {
   Alert,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  isNotificationsEnabled,
+  setNotificationsEnabled,
+} from '../../lib/notifications';
 import {
   DEFAULT_BUDGET,
   clearAll,
@@ -27,6 +32,7 @@ export default function Settings() {
     String(DEFAULT_BUDGET.savingsGoal)
   );
   const [days, setDays] = useState(String(DEFAULT_BUDGET.periodDays));
+  const [notifOn, setNotifOn] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -37,6 +43,7 @@ export default function Settings() {
         setDays(String(b.periodDays));
       }
     });
+    isNotificationsEnabled().then(setNotifOn);
   }, []);
 
   const parsedAllowance = parseFloat(allowance);
@@ -45,6 +52,11 @@ export default function Settings() {
     !isNaN(parsedAllowance) && !isNaN(parsedGoal)
       ? parsedAllowance - parsedGoal
       : NaN;
+
+  const handleToggleNotifications = async (value: boolean) => {
+    setNotifOn(value);
+    await setNotificationsEnabled(value);
+  };
 
   const handleSave = async () => {
     const allowanceValue = parseFloat(allowance);
@@ -149,6 +161,20 @@ export default function Settings() {
           </Text>
         )}
 
+        <View style={styles.toggleRow}>
+          <View style={styles.toggleText}>
+            <Text style={styles.toggleTitle}>Transaction alerts</Text>
+            <Text style={styles.toggleSub}>
+              Notify me on every expense and income
+            </Text>
+          </View>
+          <Switch
+            value={notifOn}
+            onValueChange={handleToggleNotifications}
+            trackColor={{ false: '#ccc', true: GREEN }}
+          />
+        </View>
+
         <TouchableOpacity
           style={[styles.primaryButton, saving && styles.buttonDisabled]}
           onPress={handleSave}
@@ -187,6 +213,18 @@ const styles = StyleSheet.create({
     color: GREEN,
     marginBottom: 12,
   },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f7faf8',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
+  },
+  toggleText: { flex: 1, marginRight: 12 },
+  toggleTitle: { fontSize: 15, fontWeight: '600' },
+  toggleSub: { fontSize: 12, color: '#777', marginTop: 2 },
   primaryButton: {
     backgroundColor: GREEN,
     paddingVertical: 16,

@@ -11,11 +11,28 @@ export const CATEGORIES = [
 
 export type Category = (typeof CATEGORIES)[number];
 
+export const INCOME_SOURCES = [
+  'Allowance',
+  'Gift',
+  'Refund',
+  'Other',
+] as const;
+
+export type IncomeSource = (typeof INCOME_SOURCES)[number];
+
 export interface Expense {
   id: string;
   amount: number;
   note: string;
   category: Category;
+  createdAt: number;
+}
+
+export interface Income {
+  id: string;
+  amount: number;
+  note: string;
+  source: IncomeSource;
   createdAt: number;
 }
 
@@ -34,6 +51,7 @@ export const DEFAULT_BUDGET: Budget = {
 };
 
 const EXPENSES_KEY = 'savewise.expenses.v1';
+const INCOME_KEY = 'savewise.income.v1';
 const BUDGET_KEY = 'savewise.budget.v2';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -42,6 +60,10 @@ export function startOfToday(): number {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
   return d.getTime();
+}
+
+function makeId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 export async function loadExpenses(): Promise<Expense[]> {
@@ -63,24 +85,62 @@ export async function addExpense(input: {
   amount: number;
   note: string;
   category: Category;
-}): Promise<Expense[]> {
+}): Promise<Expense> {
   const expenses = await loadExpenses();
   const expense: Expense = {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    id: makeId(),
     amount: input.amount,
     note: input.note.trim(),
     category: input.category,
     createdAt: Date.now(),
   };
-  const next = [expense, ...expenses];
-  await saveExpenses(next);
-  return next;
+  await saveExpenses([expense, ...expenses]);
+  return expense;
 }
 
 export async function deleteExpense(id: string): Promise<Expense[]> {
   const expenses = await loadExpenses();
   const next = expenses.filter((e) => e.id !== id);
   await saveExpenses(next);
+  return next;
+}
+
+export async function loadIncome(): Promise<Income[]> {
+  try {
+    const raw = await AsyncStorage.getItem(INCOME_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function saveIncome(incomes: Income[]): Promise<void> {
+  await AsyncStorage.setItem(INCOME_KEY, JSON.stringify(incomes));
+}
+
+export async function addIncome(input: {
+  amount: number;
+  note: string;
+  source: IncomeSource;
+}): Promise<Income> {
+  const incomes = await loadIncome();
+  const income: Income = {
+    id: makeId(),
+    amount: input.amount,
+    note: input.note.trim(),
+    source: input.source,
+    createdAt: Date.now(),
+  };
+  await saveIncome([income, ...incomes]);
+  return income;
+}
+
+export async function deleteIncome(id: string): Promise<Income[]> {
+  const incomes = await loadIncome();
+  const next = incomes.filter((i) => i.id !== id);
+  await saveIncome(next);
   return next;
 }
 
@@ -108,7 +168,7 @@ export async function saveBudget(budget: Budget): Promise<void> {
 }
 
 export async function clearAll(): Promise<void> {
-  await AsyncStorage.multiRemove([EXPENSES_KEY, BUDGET_KEY]);
+  await AsyncStorage.multiRemove([EXPENSES_KEY, INCOME_KEY, BUDGET_KEY]);
 }
 
 function startOfDayFrom(ts: number): number {
@@ -129,24 +189,42 @@ export function totalSpent(expenses: Expense[]): number {
   return expenses.reduce((sum, e) => sum + e.amount, 0);
 }
 
+export function totalIncome(incomes: Income[]): number {
+  return incomes.reduce((sum, i) => sum + i.amount, 0);
+}
+
 export function spendingLimit(budget: Budget): number {
   return budget.allowance - budget.savingsGoal;
 }
 
-export function savedSoFar(budget: Budget, expenses: Expense[]): number {
-  return budget.allowance - totalSpent(expenses);
+export function savedSoFar(
+  budget: Budget,
+  expenses: Expense[],
+  incomes: Income[]
+): number {
+  return budget.allowance + totalIncome(incomes) - totalSpent(expenses);
 }
 
-export function savingsProgress(budget: Budget, expenses: Expense[]): number {
+export function savingsProgress(
+  budget: Budget,
+  expenses: Expense[],
+  incomes: Income[]
+): number {
   if (budget.savingsGoal <= 0) return 0;
-  return savedSoFar(budget, expenses) / budget.savingsGoal;
+  return savedSoFar(budget, expenses, incomes) / budget.savingsGoal;
 }
 
-export function remainingToSpend(budget: Budget, expenses: Expense[]): number {
+export function remainingToSpend(
+  budget: Budget,
+  expenses: Expense[]
+): number {
   return spendingLimit(budget) - totalSpent(expenses);
 }
 
-export function dailyAllowance(budget: Budget, expenses: Expense[]): number {
+export function dailyAllowance(
+  budget: Budget,
+  expenses: Expense[]
+): number {
   const left = daysRemaining(budget);
   if (left <= 0) return 0;
   return remainingToSpend(budget, expenses) / left;

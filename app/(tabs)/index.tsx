@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Budget,
   Expense,
+  Income,
   dailyAllowance,
   daysRemaining,
   deleteExpense,
@@ -20,10 +21,12 @@ import {
   formatINR,
   loadBudget,
   loadExpenses,
+  loadIncome,
   remainingToSpend,
   savedSoFar,
   savingsProgress,
   spendingLimit,
+  totalIncome,
   totalSpent,
 } from '../../lib/store';
 
@@ -35,11 +38,17 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [budget, setBudget] = useState<Budget | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [incomes, setIncomes] = useState<Income[]>([]);
 
   const reload = async () => {
-    const [b, e] = await Promise.all([loadBudget(), loadExpenses()]);
+    const [b, e, i] = await Promise.all([
+      loadBudget(),
+      loadExpenses(),
+      loadIncome(),
+    ]);
     setBudget(b);
     setExpenses(e);
+    setIncomes(i);
     setLoading(false);
   };
 
@@ -79,12 +88,13 @@ export default function Dashboard() {
   }
 
   const spent = totalSpent(expenses);
+  const incomeTotal = totalIncome(incomes);
   const limit = spendingLimit(budget);
   const leftToSpend = remainingToSpend(budget, expenses);
   const leftDays = daysRemaining(budget);
   const allowance = dailyAllowance(budget, expenses);
-  const saved = savedSoFar(budget, expenses);
-  const goalProgress = savingsProgress(budget, expenses);
+  const saved = savedSoFar(budget, expenses, incomes);
+  const goalProgress = savingsProgress(budget, expenses, incomes);
   const goalReached = saved >= budget.savingsGoal;
   const spendProgress = limit > 0 ? Math.min(1, spent / limit) : 0;
   const overLimit = leftToSpend < 0;
@@ -148,6 +158,12 @@ export default function Dashboard() {
               <Text style={styles.budgetLine}>
                 of {formatINR(limit)} spending limit
               </Text>
+
+              {incomeTotal > 0 && (
+                <Text style={styles.incomeLine}>
+                  Income received: {formatINR(incomeTotal)}
+                </Text>
+              )}
 
               <View style={styles.allowanceBox}>
                 <Text style={styles.allowanceLabel}>Daily allowance</Text>
@@ -257,6 +273,7 @@ const styles = StyleSheet.create({
   progressFill: { height: 10, backgroundColor: GREEN, borderRadius: 5 },
   progressOver: { backgroundColor: RED },
   budgetLine: { fontSize: 13, color: '#777', marginTop: 6 },
+  incomeLine: { fontSize: 13, color: GREEN, marginTop: 4, fontWeight: '600' },
   allowanceBox: {
     backgroundColor: LIGHT_GREEN,
     borderRadius: 12,

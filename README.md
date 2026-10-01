@@ -1,18 +1,23 @@
 # SaveWise
 
 A minimal personal budget tracker. Set a monthly allowance and a savings
-goal, log expenses, and watch your progress toward the goal. The spending
-limit is the allowance minus the savings goal. Everything is stored locally
-on the device with AsyncStorage. No backend, no login.
+goal, log expenses and income, and watch your progress toward the goal. The
+spending limit is the allowance minus the savings goal. Everything is stored
+locally on the device with AsyncStorage. No backend, no login.
 
 Default preset: 5000 monthly allowance, 4000 savings goal, 30 day period,
 which gives a 1000 spending limit.
 
+A local notification fires on every expense and every income logged, showing
+the amount, category or source, note, and updated balance. This can be
+toggled in Budget settings. Notification permission is requested on first
+launch.
+
 ## Screens
 
 - Dashboard: savings goal progress, spending vs limit, daily allowance, recent expenses
-- Add: log an expense with amount, note, and category
-- Budget: set allowance, savings goal, and period length; start a new period; reset data
+- Add: log an expense or income with amount, note, and category or source
+- Budget: set allowance, savings goal, and period length; toggle transaction alerts; start a new period; reset data
 
 ## Develop
 
