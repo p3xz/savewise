@@ -188,6 +188,11 @@ export default function Settings() {
         <TouchableOpacity style={styles.dangerButton} onPress={handleReset}>
           <Text style={styles.dangerText}>Reset all data</Text>
         </TouchableOpacity>
+
+        <View style={styles.creditBox}>
+          <Text style={styles.credit}>Made with love from Namish</Text>
+          <Text style={styles.creditSub}>For personal use</Text>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -236,4 +241,7 @@ const styles = StyleSheet.create({
   primaryButtonText: { color: '#fff', fontSize: 17, fontWeight: '700' },
   dangerButton: { marginTop: 28, alignItems: 'center', padding: 12 },
   dangerText: { color: RED, fontSize: 15, fontWeight: '600' },
+  creditBox: { alignItems: 'center', marginTop: 40 },
+  credit: { fontSize: 14, fontWeight: '600', color: '#555' },
+  creditSub: { fontSize: 12, color: '#999', marginTop: 2 },
 });

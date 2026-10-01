@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  RefreshControl,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -36,11 +37,12 @@ const RED = '#c0392b';
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [budget, setBudget] = useState<Budget | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [incomes, setIncomes] = useState<Income[]>([]);
 
-  const reload = async () => {
+  const reload = useCallback(async () => {
     const [b, e, i] = await Promise.all([
       loadBudget(),
       loadExpenses(),
@@ -50,11 +52,23 @@ export default function Dashboard() {
     setExpenses(e);
     setIncomes(i);
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     reload();
-  }, []);
+  }, [reload]);
+
+  useFocusEffect(
+    useCallback(() => {
+      reload();
+    }, [reload])
+  );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await reload();
+    setRefreshing(false);
+  }, [reload]);
 
   const handleDelete = async (id: string) => {
     const next = await deleteExpense(id);
@@ -105,6 +119,13 @@ export default function Dashboard() {
         data={expenses}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={GREEN}
+          />
+        }
         ListHeaderComponent={
           <View>
             <Text style={styles.heading}>Dashboard</Text>
@@ -133,14 +154,18 @@ export default function Dashboard() {
             <View style={styles.card}>
               <View style={styles.row}>
                 <View style={styles.stat}>
-                  <Text style={styles.statLabel}>Spent</Text>
+                  <Text style={styles.statLabel}>Total spent</Text>
                   <Text style={styles.statValue}>{formatINR(spent)}</Text>
                 </View>
                 <View style={styles.stat}>
-                  <Text style={styles.statLabel}>Can still spend</Text>
-                  <Text
-                    style={[styles.statValue, overLimit && styles.negative]}
-                  >
+                  <Text style={styles.statLabel}>Total received</Text>
+                  <Text style={[styles.statValue, styles.positive]}>
+                    {formatINR(incomeTotal)}
+                  </Text>
+                </View>
+                <View style={styles.stat}>
+                  <Text style={styles.statLabel}>Left to spend</Text>
+                  <Text style={[styles.statValue, overLimit && styles.negative]}>
                     {formatINR(leftToSpend)}
                   </Text>
                 </View>
@@ -158,12 +183,6 @@ export default function Dashboard() {
               <Text style={styles.budgetLine}>
                 of {formatINR(limit)} spending limit
               </Text>
-
-              {incomeTotal > 0 && (
-                <Text style={styles.incomeLine}>
-                  Income received: {formatINR(incomeTotal)}
-                </Text>
-              )}
 
               <View style={styles.allowanceBox}>
                 <Text style={styles.allowanceLabel}>Daily allowance</Text>
@@ -196,6 +215,12 @@ export default function Dashboard() {
           <Text style={styles.emptyList}>
             No expenses yet. Tap + Add to log your first one.
           </Text>
+        }
+        ListFooterComponent={
+          <View style={styles.footer}>
+            <Text style={styles.credit}>Made with love from Namish</Text>
+            <Text style={styles.creditSub}>For personal use</Text>
+          </View>
         }
         renderItem={({ item }) => (
           <View style={styles.expenseRow}>
@@ -261,8 +286,9 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between' },
   stat: { flex: 1 },
   statLabel: { fontSize: 13, color: '#777' },
-  statValue: { fontSize: 24, fontWeight: '700', marginTop: 2 },
+  statValue: { fontSize: 20, fontWeight: '700', marginTop: 2 },
   negative: { color: RED },
+  positive: { color: GREEN },
   progressTrack: {
     height: 10,
     backgroundColor: '#e3e3e3',
@@ -273,7 +299,6 @@ const styles = StyleSheet.create({
   progressFill: { height: 10, backgroundColor: GREEN, borderRadius: 5 },
   progressOver: { backgroundColor: RED },
   budgetLine: { fontSize: 13, color: '#777', marginTop: 6 },
-  incomeLine: { fontSize: 13, color: GREEN, marginTop: 4, fontWeight: '600' },
   allowanceBox: {
     backgroundColor: LIGHT_GREEN,
     borderRadius: 12,
@@ -324,4 +349,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   primaryButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  footer: { alignItems: 'center', marginTop: 32, marginBottom: 12 },
+  credit: { fontSize: 14, fontWeight: '600', color: '#555' },
+  creditSub: { fontSize: 12, color: '#999', marginTop: 2 },
 });
