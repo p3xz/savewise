@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
+  DEFAULT_BUDGET,
   clearAll,
+  formatINR,
   loadBudget,
   saveBudget,
   startOfToday,
@@ -20,24 +22,47 @@ const GREEN = '#1a7f4b';
 const RED = '#c0392b';
 
 export default function Settings() {
-  const [total, setTotal] = useState('1500');
-  const [days, setDays] = useState('14');
+  const [allowance, setAllowance] = useState(String(DEFAULT_BUDGET.allowance));
+  const [savingsGoal, setSavingsGoal] = useState(
+    String(DEFAULT_BUDGET.savingsGoal)
+  );
+  const [days, setDays] = useState(String(DEFAULT_BUDGET.periodDays));
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     loadBudget().then((b) => {
       if (b) {
-        setTotal(String(b.total));
+        setAllowance(String(b.allowance));
+        setSavingsGoal(String(b.savingsGoal));
         setDays(String(b.periodDays));
       }
     });
   }, []);
 
+  const parsedAllowance = parseFloat(allowance);
+  const parsedGoal = parseFloat(savingsGoal);
+  const spendingLimitPreview =
+    !isNaN(parsedAllowance) && !isNaN(parsedGoal)
+      ? parsedAllowance - parsedGoal
+      : NaN;
+
   const handleSave = async () => {
-    const totalValue = parseFloat(total);
+    const allowanceValue = parseFloat(allowance);
+    const goalValue = parseFloat(savingsGoal);
     const daysValue = parseInt(days, 10);
-    if (isNaN(totalValue) || totalValue <= 0) {
-      Alert.alert('Invalid budget', 'Please enter a total amount greater than 0.');
+    if (isNaN(allowanceValue) || allowanceValue <= 0) {
+      Alert.alert('Invalid allowance', 'Please enter an amount greater than 0.');
+      return;
+    }
+    if (isNaN(goalValue) || goalValue < 0) {
+      Alert.alert('Invalid goal', 'Please enter a savings goal of 0 or more.');
+      return;
+    }
+    if (goalValue >= allowanceValue) {
+      Alert.alert(
+        'Invalid goal',
+        'The savings goal must be less than the allowance.'
+      );
       return;
     }
     if (isNaN(daysValue) || daysValue <= 0) {
@@ -47,7 +72,8 @@ export default function Settings() {
     setSaving(true);
     try {
       await saveBudget({
-        total: totalValue,
+        allowance: allowanceValue,
+        savingsGoal: goalValue,
         periodDays: daysValue,
         startDate: startOfToday(),
       });
@@ -84,15 +110,25 @@ export default function Settings() {
       <View style={styles.content}>
         <Text style={styles.heading}>Budget</Text>
         <Text style={styles.sub}>
-          Set the total money you have and how many days it must last.
+          Set your monthly allowance and how much of it you want to save.
         </Text>
 
-        <Text style={styles.label}>Total amount</Text>
+        <Text style={styles.label}>Monthly allowance</Text>
         <TextInput
           style={styles.input}
-          value={total}
-          onChangeText={setTotal}
-          placeholder="1500"
+          value={allowance}
+          onChangeText={setAllowance}
+          placeholder="5000"
+          keyboardType="decimal-pad"
+          returnKeyType="done"
+        />
+
+        <Text style={styles.label}>Savings goal per month</Text>
+        <TextInput
+          style={styles.input}
+          value={savingsGoal}
+          onChangeText={setSavingsGoal}
+          placeholder="4000"
           keyboardType="decimal-pad"
           returnKeyType="done"
         />
@@ -102,10 +138,16 @@ export default function Settings() {
           style={styles.input}
           value={days}
           onChangeText={setDays}
-          placeholder="14"
+          placeholder="30"
           keyboardType="number-pad"
           returnKeyType="done"
         />
+
+        {!isNaN(spendingLimitPreview) && spendingLimitPreview > 0 && (
+          <Text style={styles.preview}>
+            Spending limit: {formatINR(spendingLimitPreview)} for the period
+          </Text>
+        )}
 
         <TouchableOpacity
           style={[styles.primaryButton, saving && styles.buttonDisabled]}
@@ -138,6 +180,12 @@ const styles = StyleSheet.create({
     padding: 14,
     fontSize: 18,
     marginBottom: 16,
+  },
+  preview: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: GREEN,
+    marginBottom: 12,
   },
   primaryButton: {
     backgroundColor: GREEN,

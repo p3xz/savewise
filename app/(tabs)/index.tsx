@@ -20,7 +20,10 @@ import {
   formatINR,
   loadBudget,
   loadExpenses,
-  remaining,
+  remainingToSpend,
+  savedSoFar,
+  savingsProgress,
+  spendingLimit,
   totalSpent,
 } from '../../lib/store';
 
@@ -63,7 +66,7 @@ export default function Dashboard() {
         <Ionicons name="wallet-outline" size={64} color={GREEN} />
         <Text style={styles.emptyTitle}>No budget set yet</Text>
         <Text style={styles.emptyText}>
-          Set your total amount and number of days to start tracking.
+          Set your monthly allowance and savings goal to start tracking.
         </Text>
         <TouchableOpacity
           style={styles.primaryButton}
@@ -76,11 +79,15 @@ export default function Dashboard() {
   }
 
   const spent = totalSpent(expenses);
-  const left = remaining(budget, expenses);
+  const limit = spendingLimit(budget);
+  const leftToSpend = remainingToSpend(budget, expenses);
   const leftDays = daysRemaining(budget);
   const allowance = dailyAllowance(budget, expenses);
-  const progress = budget.total > 0 ? Math.min(1, spent / budget.total) : 0;
-  const overBudget = left < 0;
+  const saved = savedSoFar(budget, expenses);
+  const goalProgress = savingsProgress(budget, expenses);
+  const goalReached = saved >= budget.savingsGoal;
+  const spendProgress = limit > 0 ? Math.min(1, spent / limit) : 0;
+  const overLimit = leftToSpend < 0;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -92,6 +99,27 @@ export default function Dashboard() {
           <View>
             <Text style={styles.heading}>Dashboard</Text>
 
+            <View style={styles.goalCard}>
+              <Text style={styles.goalLabel}>Savings goal</Text>
+              <Text style={styles.goalSaved}>{formatINR(saved)}</Text>
+              <Text style={styles.goalTarget}>
+                saved of {formatINR(budget.savingsGoal)} goal
+              </Text>
+              <View style={styles.goalTrack}>
+                <View
+                  style={[
+                    styles.goalFill,
+                    { width: `${Math.min(100, goalProgress * 100)}%` },
+                  ]}
+                />
+              </View>
+              <Text style={styles.goalStatus}>
+                {goalReached
+                  ? 'Goal reached. Keep it up.'
+                  : `${formatINR(budget.savingsGoal - saved)} more to reach your goal`}
+              </Text>
+            </View>
+
             <View style={styles.card}>
               <View style={styles.row}>
                 <View style={styles.stat}>
@@ -99,11 +127,11 @@ export default function Dashboard() {
                   <Text style={styles.statValue}>{formatINR(spent)}</Text>
                 </View>
                 <View style={styles.stat}>
-                  <Text style={styles.statLabel}>Remaining</Text>
+                  <Text style={styles.statLabel}>Can still spend</Text>
                   <Text
-                    style={[styles.statValue, overBudget && styles.negative]}
+                    style={[styles.statValue, overLimit && styles.negative]}
                   >
-                    {formatINR(left)}
+                    {formatINR(leftToSpend)}
                   </Text>
                 </View>
               </View>
@@ -112,13 +140,13 @@ export default function Dashboard() {
                 <View
                   style={[
                     styles.progressFill,
-                    { width: `${progress * 100}%` },
-                    overBudget && styles.progressOver,
+                    { width: `${spendProgress * 100}%` },
+                    overLimit && styles.progressOver,
                   ]}
                 />
               </View>
               <Text style={styles.budgetLine}>
-                of {formatINR(budget.total)} budget
+                of {formatINR(limit)} spending limit
               </Text>
 
               <View style={styles.allowanceBox}>
@@ -132,9 +160,10 @@ export default function Dashboard() {
                 </Text>
               </View>
 
-              {overBudget && (
+              {overLimit && (
                 <Text style={styles.warning}>
-                  You are over budget. Cut spending to get back on track.
+                  You are over your spending limit. Your savings goal is at
+                  risk.
                 </Text>
               )}
             </View>
@@ -189,6 +218,24 @@ const styles = StyleSheet.create({
   },
   list: { padding: 20 },
   heading: { fontSize: 28, fontWeight: '700', marginBottom: 16 },
+  goalCard: {
+    backgroundColor: GREEN,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+  },
+  goalLabel: { fontSize: 14, color: '#cfe8d8', fontWeight: '600' },
+  goalSaved: { fontSize: 36, fontWeight: '800', color: '#ffffff', marginTop: 4 },
+  goalTarget: { fontSize: 14, color: '#cfe8d8', marginTop: 2 },
+  goalTrack: {
+    height: 12,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderRadius: 6,
+    marginTop: 14,
+    overflow: 'hidden',
+  },
+  goalFill: { height: 12, backgroundColor: '#ffffff', borderRadius: 6 },
+  goalStatus: { fontSize: 13, color: '#ffffff', marginTop: 10, fontWeight: '600' },
   card: {
     backgroundColor: '#f7faf8',
     borderRadius: 16,

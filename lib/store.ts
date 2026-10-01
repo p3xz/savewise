@@ -20,13 +20,21 @@ export interface Expense {
 }
 
 export interface Budget {
-  total: number;
+  allowance: number;
+  savingsGoal: number;
   periodDays: number;
   startDate: number;
 }
 
+export const DEFAULT_BUDGET: Budget = {
+  allowance: 5000,
+  savingsGoal: 4000,
+  periodDays: 30,
+  startDate: 0,
+};
+
 const EXPENSES_KEY = 'savewise.expenses.v1';
-const BUDGET_KEY = 'savewise.budget.v1';
+const BUDGET_KEY = 'savewise.budget.v2';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -82,7 +90,8 @@ export async function loadBudget(): Promise<Budget | null> {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Budget;
     if (
-      typeof parsed.total !== 'number' ||
+      typeof parsed.allowance !== 'number' ||
+      typeof parsed.savingsGoal !== 'number' ||
       typeof parsed.periodDays !== 'number' ||
       typeof parsed.startDate !== 'number'
     ) {
@@ -102,14 +111,14 @@ export async function clearAll(): Promise<void> {
   await AsyncStorage.multiRemove([EXPENSES_KEY, BUDGET_KEY]);
 }
 
-export function daysElapsed(startDate: number): number {
-  return Math.max(0, Math.floor((startOfToday() - startOfTodayFrom(startDate)) / DAY_MS));
-}
-
-function startOfTodayFrom(ts: number): number {
+function startOfDayFrom(ts: number): number {
   const d = new Date(ts);
   d.setHours(0, 0, 0, 0);
   return d.getTime();
+}
+
+export function daysElapsed(startDate: number): number {
+  return Math.max(0, Math.floor((startOfToday() - startOfDayFrom(startDate)) / DAY_MS));
 }
 
 export function daysRemaining(budget: Budget): number {
@@ -120,14 +129,27 @@ export function totalSpent(expenses: Expense[]): number {
   return expenses.reduce((sum, e) => sum + e.amount, 0);
 }
 
-export function remaining(budget: Budget, expenses: Expense[]): number {
-  return budget.total - totalSpent(expenses);
+export function spendingLimit(budget: Budget): number {
+  return budget.allowance - budget.savingsGoal;
+}
+
+export function savedSoFar(budget: Budget, expenses: Expense[]): number {
+  return budget.allowance - totalSpent(expenses);
+}
+
+export function savingsProgress(budget: Budget, expenses: Expense[]): number {
+  if (budget.savingsGoal <= 0) return 0;
+  return savedSoFar(budget, expenses) / budget.savingsGoal;
+}
+
+export function remainingToSpend(budget: Budget, expenses: Expense[]): number {
+  return spendingLimit(budget) - totalSpent(expenses);
 }
 
 export function dailyAllowance(budget: Budget, expenses: Expense[]): number {
   const left = daysRemaining(budget);
   if (left <= 0) return 0;
-  return remaining(budget, expenses) / left;
+  return remainingToSpend(budget, expenses) / left;
 }
 
 export function formatINR(amount: number): string {
