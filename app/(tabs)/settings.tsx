@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   Alert,
+  Linking,
   ScrollView,
   StyleSheet,
   Switch,
@@ -42,6 +43,23 @@ import {
 
 const GREEN = '#1a7f4b';
 const RED = '#c0392b';
+
+const SOCIALS: { label: string; url: string }[] = [
+  { label: 'GitHub', url: 'https://github.com/p3xz' },
+  { label: 'LinkedIn', url: 'https://linkedin.com/in/namish-yadav-639769408' },
+  { label: 'Instagram', url: 'https://instagram.com/nam7sh' },
+  { label: 'Portfolio', url: 'https://namishhh.vercel.app' },
+];
+
+async function openSocial(url: string): Promise<void> {
+  try {
+    if (await Linking.canOpenURL(url)) {
+      await Linking.openURL(url);
+    }
+  } catch {
+    // Keep the app responsive if a link cannot open.
+  }
+}
 
 export default function Settings() {
   const [allowance, setAllowance] = useState(String(DEFAULT_BUDGET.allowance));
@@ -331,6 +349,25 @@ export default function Settings() {
           <Text style={styles.dangerText}>{t('set.resetAll')}</Text>
         </Tap>
 
+        <Text style={styles.sectionHeading}>{t('set.privacyTitle')}</Text>
+        <View style={styles.infoBox}>
+          <Text style={styles.infoText}>{t('set.privacyBody')}</Text>
+        </View>
+
+        <Text style={styles.sectionHeading}>{t('set.aboutTitle')}</Text>
+        <View style={styles.socialRow}>
+          {SOCIALS.map((s) => (
+            <Tap
+              key={s.label}
+              style={styles.socialChip}
+              onPress={() => openSocial(s.url)}
+              sound
+            >
+              <Text style={styles.socialChipText}>{s.label}</Text>
+            </Tap>
+          ))}
+        </View>
+
         <View style={styles.creditBox}>
           <Text style={styles.credit}>{t('dash.credit')}</Text>
           <Text style={styles.creditSub}>{t('dash.creditSub')}</Text>
@@ -421,6 +458,23 @@ const styles = StyleSheet.create({
   primaryButtonText: { color: '#fff', fontSize: 17, fontFamily: FONT_BOLD },
   dangerButton: { marginTop: 28, alignItems: 'center', padding: 12 },
   dangerText: { color: RED, fontSize: 15, fontWeight: '600' },
+  infoBox: {
+    backgroundColor: '#f7faf8',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
+  },
+  infoText: { fontSize: 13, fontFamily: FONT_MEDIUM, color: '#555', lineHeight: 19 },
+  socialRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 4 },
+  socialChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#eaf4ee',
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  socialChipText: { fontSize: 14, fontFamily: FONT_SEMIBOLD, color: GREEN },
   creditBox: { alignItems: 'center', marginTop: 40 },
   credit: { fontSize: 14, fontFamily: FONT_SEMIBOLD, color: '#555' },
   creditSub: { fontSize: 12, color: '#999', marginTop: 2 },
