@@ -343,6 +343,38 @@ export function dailyAllowance(
   return remainingToSpend(budget, expenses) / left;
 }
 
+export function expectedSpentByNow(budget: Budget): number {
+  const elapsed = daysElapsed(budget.startDate);
+  if (budget.periodDays <= 0) return 0;
+  return spendingLimit(budget) * Math.min(1, elapsed / budget.periodDays);
+}
+
+export function paceDelta(budget: Budget, expenses: Expense[]): number {
+  return expectedSpentByNow(budget) - totalSpent(expenses);
+}
+
+export function projectedSavings(
+  budget: Budget,
+  expenses: Expense[],
+  incomes: Income[]
+): number {
+  const elapsed = daysElapsed(budget.startDate);
+  const spent = totalSpent(expenses);
+  if (elapsed <= 0 || budget.periodDays <= 0) {
+    return savedSoFar(budget, expenses, incomes);
+  }
+  const projectedTotal = (spent / elapsed) * budget.periodDays;
+  return budget.allowance + totalIncome(incomes) - projectedTotal;
+}
+
+export function isOffTrack(
+  budget: Budget,
+  expenses: Expense[],
+  incomes: Income[]
+): boolean {
+  return projectedSavings(budget, expenses, incomes) < budget.savingsGoal;
+}
+
 export function formatMoney(amount: number, symbol: string = DEFAULT_CURRENCY): string {
   const rounded = Math.round(amount * 100) / 100;
   const locale = symbol === '\u20B9' ? 'en-IN' : 'en-US';

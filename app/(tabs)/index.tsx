@@ -13,8 +13,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   notifyAfterIncome,
+  checkPaceAlert,
   refreshDailyReminder,
 } from '../../lib/notifications';
+import AnimatedBackground from '../../lib/AnimatedBackground';
 import {
   FONT_BOLD,
   FONT_MEDIUM,
@@ -42,12 +44,15 @@ import {
   deleteExpense,
   formatDate,
   formatMoney,
+  isOffTrack,
   loadCurrency,
   loadBudget,
   loadExpectedIncome,
   loadExpenses,
   loadIncome,
   markExpectedReceived,
+  paceDelta,
+  projectedSavings,
   remainingToSpend,
   savedSoFar,
   savingsProgress,
@@ -89,6 +94,7 @@ export default function Dashboard() {
     setCurrency(c);
     setLoading(false);
     refreshDailyReminder();
+    checkPaceAlert();
   }, []);
 
   useEffect(() => {
@@ -154,12 +160,16 @@ export default function Dashboard() {
   const goalReached = saved >= budget.savingsGoal;
   const spendProgress = limit > 0 ? Math.min(1, spent / limit) : 0;
   const overLimit = leftToSpend < 0;
+  const pace = paceDelta(budget, expenses);
+  const projected = projectedSavings(budget, expenses, incomes);
+  const offTrack = isOffTrack(budget, expenses, incomes);
   const pendingExpected = expected.filter((x) => !x.received);
   const pendingTotal = totalPendingExpected(expected);
   const receivedExpectedTotal = totalReceivedExpected(expected);
 
   return (
     <SafeAreaView style={styles.container}>
+      <AnimatedBackground />
       <FlatList
         data={expenses}
         keyExtractor={(item) => item.id}
@@ -204,6 +214,17 @@ export default function Dashboard() {
                     })}
               </Text>
             </Animated.View>
+
+            {offTrack && (
+              <View style={styles.offTrackBanner}>
+                <Text style={styles.offTrackText}>
+                  {t('dash.offTrack', {
+                    projected: formatMoney(projected, currency),
+                    goal: formatMoney(budget.savingsGoal, currency),
+                  })}
+                </Text>
+              </View>
+            )}
 
             <Animated.View style={[secondEntrance]}>
             <View style={styles.card}>
@@ -314,6 +335,13 @@ export default function Dashboard() {
                     days: leftDays,
                     dayWord: t(leftDays === 1 ? 'dash.day' : 'dash.days'),
                   })}
+                </Text>
+                <Text style={[styles.paceLine, pace < 0 && styles.negative]}>
+                  {pace >= 0
+                    ? t('dash.paceUnder', { amount: formatMoney(pace, currency) })
+                    : t('dash.paceOver', {
+                        amount: formatMoney(-pace, currency),
+                      })}
                 </Text>
               </View>
 
@@ -426,6 +454,16 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   allowanceSub: { fontSize: 12, color: '#2c6e49', marginTop: 2 },
+  paceLine: { fontSize: 13, color: GREEN, marginTop: 8, fontFamily: FONT_MEDIUM },
+  offTrackBanner: {
+    backgroundColor: '#fdecea',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: RED,
+  },
+  offTrackText: { fontSize: 14, color: RED, fontFamily: FONT_SEMIBOLD },
   warning: { color: RED, fontSize: 13, marginTop: 12, fontWeight: '600' },
   sectionHeader: {
     flexDirection: 'row',

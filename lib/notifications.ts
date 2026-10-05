@@ -6,10 +6,12 @@ import {
   daysRemaining,
   dailyAllowance,
   formatMoney,
+  isOffTrack,
   loadBudget,
   loadCurrency,
   loadExpenses,
   loadIncome,
+  projectedSavings,
   remainingToSpend,
   savedSoFar,
   spendingLimit,
@@ -234,5 +236,38 @@ export async function refreshDailyReminder(): Promise<void> {
     });
   } catch {
     // Reminders are best effort; the app works without them.
+  }
+}
+
+const PACE_ALERT_KEY = 'savewise.notifications.paceAlert.v1';
+
+export async function checkPaceAlert(): Promise<void> {
+  try {
+    if (!(await isNotificationsEnabled())) return;
+    const budget = await loadBudget();
+    if (!budget) return;
+    const [expenses, incomes] = await Promise.all([
+      loadExpenses(),
+      loadIncome(),
+    ]);
+    if (!isOffTrack(budget, expenses, incomes)) return;
+    const today = new Date().toISOString().slice(0, 10);
+    const last = await AsyncStorage.getItem(PACE_ALERT_KEY);
+    if (last === today) return;
+    const symbol = await loadCurrency();
+    const lang = await loadLanguage();
+    await fire({
+      title: t(lang, 'notif.offTrackTitle'),
+      body: t(lang, 'notif.offTrackBody', {
+        projected: formatMoney(
+          projectedSavings(budget, expenses, incomes),
+          symbol
+        ),
+        goal: formatMoney(budget.savingsGoal, symbol),
+      }),
+    });
+    await AsyncStorage.setItem(PACE_ALERT_KEY, today);
+  } catch {
+    // Pace alerts are best effort; the app works without them.
   }
 }
