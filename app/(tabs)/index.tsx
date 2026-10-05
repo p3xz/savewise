@@ -161,10 +161,12 @@ export default function Dashboard() {
           <View>
             <Text style={styles.heading}>{t('dash.title')}</Text>
 
-            <View style={styles.goalCard}>
-              <Text style={styles.goalLabel}>{t('dash.savingsGoal')}</Text>
+            <View style={[styles.goalCard, overLimit && styles.goalCardOver]}>
+              <Text style={[styles.goalLabel, overLimit && styles.goalLabelOver]}>
+                {t('dash.savingsGoal')}
+              </Text>
               <Text style={styles.goalSaved}>{formatMoney(saved, currency)}</Text>
-              <Text style={styles.goalTarget}>
+              <Text style={[styles.goalTarget, overLimit && styles.goalLabelOver]}>
                 {t('dash.savedOf', { goal: formatMoney(budget.savingsGoal, currency) })}
               </Text>
               <View style={styles.goalTrack}>
@@ -351,7 +353,11 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 16,
   },
+  goalCardOver: {
+    backgroundColor: RED,
+  },
   goalLabel: { fontSize: 14, color: '#cfe8d8', fontWeight: '600' },
+  goalLabelOver: { color: '#f6d5cf' },
   goalSaved: { fontSize: 36, fontWeight: '800', color: '#ffffff', marginTop: 4 },
   goalTarget: { fontSize: 14, color: '#cfe8d8', marginTop: 2 },
   goalTrack: {
