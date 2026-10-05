@@ -19,6 +19,7 @@ import {
   useLanguage,
 } from '../../lib/i18n';
 import { PressFeedback, Tap, useEntrance } from '../../lib/anim';
+import { FONT_BOLD, FONT_MEDIUM, FONT_SEMIBOLD } from '../../lib/fonts';
 import {
   CATEGORIES,
   Category,
@@ -193,7 +194,7 @@ export default function AddEntry() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#ffffff' },
   content: { padding: 20 },
-  heading: { fontSize: 28, fontWeight: '700', marginBottom: 16 },
+  heading: { fontSize: 28, fontFamily: FONT_BOLD, marginBottom: 16 },
   typeRow: { flexDirection: 'row', marginBottom: 20 },
   typeButton: {
     flex: 1,
@@ -204,9 +205,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   typeButtonActive: { backgroundColor: GREEN },
-  typeButtonText: { fontSize: 16, fontWeight: '600', color: '#444' },
+  typeButtonText: { fontSize: 16, fontFamily: FONT_SEMIBOLD, color: '#444' },
   typeButtonTextActive: { color: '#fff' },
-  label: { fontSize: 14, fontWeight: '600', color: '#444', marginBottom: 6 },
+  label: { fontSize: 14, fontFamily: FONT_SEMIBOLD, color: '#444', marginBottom: 6 },
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
@@ -225,7 +226,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   chipActive: { backgroundColor: GREEN },
-  chipText: { fontSize: 14, color: '#444' },
+  chipText: { fontSize: 14, fontFamily: FONT_MEDIUM, color: '#444' },
   chipTextActive: { color: '#fff', fontWeight: '600' },
   primaryButton: {
     backgroundColor: GREEN,
@@ -234,5 +235,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonDisabled: { opacity: 0.6 },
-  primaryButtonText: { color: '#fff', fontSize: 17, fontWeight: '700' },
+  primaryButtonText: { color: '#fff', fontSize: 17, fontFamily: FONT_BOLD },
 });

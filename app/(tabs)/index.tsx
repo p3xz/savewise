@@ -16,6 +16,11 @@ import {
   refreshDailyReminder,
 } from '../../lib/notifications';
 import {
+  FONT_BOLD,
+  FONT_MEDIUM,
+  FONT_SEMIBOLD,
+} from '../../lib/fonts';
+import {
   categoryLabel,
   sourceLabel,
   useLanguage,
@@ -365,7 +370,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   list: { padding: 20 },
-  heading: { fontSize: 28, fontWeight: '700', marginBottom: 16 },
+  heading: { fontSize: 28, fontFamily: FONT_BOLD, marginBottom: 16 },
   goalCard: {
     backgroundColor: GREEN,
     borderRadius: 16,
@@ -375,9 +380,9 @@ const styles = StyleSheet.create({
   goalCardOver: {
     backgroundColor: RED,
   },
-  goalLabel: { fontSize: 14, color: '#cfe8d8', fontWeight: '600' },
+  goalLabel: { fontSize: 14, color: '#cfe8d8', fontFamily: FONT_MEDIUM },
   goalLabelOver: { color: '#f6d5cf' },
-  goalSaved: { fontSize: 36, fontWeight: '800', color: '#ffffff', marginTop: 4 },
+  goalSaved: { fontSize: 36, fontFamily: FONT_BOLD, color: '#ffffff', marginTop: 4 },
   goalTarget: { fontSize: 14, color: '#cfe8d8', marginTop: 2 },
   goalTrack: {
     height: 12,
@@ -386,7 +391,7 @@ const styles = StyleSheet.create({
     marginTop: 14,
     overflow: 'hidden',
   },
-  goalStatus: { fontSize: 13, color: '#ffffff', marginTop: 10, fontWeight: '600' },
+  goalStatus: { fontSize: 13, color: '#ffffff', marginTop: 10, fontFamily: FONT_SEMIBOLD },
   card: {
     backgroundColor: '#f7faf8',
     borderRadius: 16,
@@ -396,7 +401,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between' },
   stat: { flex: 1 },
   statLabel: { fontSize: 13, color: '#777' },
-  statValue: { fontSize: 20, fontWeight: '700', marginTop: 2 },
+  statValue: { fontSize: 20, fontFamily: FONT_BOLD, marginTop: 2 },
   negative: { color: RED },
   positive: { color: GREEN },
   progressTrack: {
@@ -416,7 +421,7 @@ const styles = StyleSheet.create({
   allowanceLabel: { fontSize: 13, color: '#2c6e49' },
   allowanceValue: {
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: FONT_BOLD,
     color: GREEN,
     marginTop: 2,
   },
@@ -428,8 +433,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
-  sectionTitle: { fontSize: 18, fontWeight: '700' },
-  addLink: { fontSize: 16, color: GREEN, fontWeight: '600' },
+  sectionTitle: { fontSize: 18, fontFamily: FONT_BOLD },
+  addLink: { fontSize: 16, color: GREEN, fontFamily: FONT_SEMIBOLD },
   emptyList: { color: '#777', fontSize: 14, marginTop: 8 },
   expenseRow: {
     flexDirection: 'row',
@@ -441,7 +446,7 @@ const styles = StyleSheet.create({
   expenseInfo: { flex: 1, marginRight: 8 },
   expenseNote: { fontSize: 16, fontWeight: '600' },
   expenseMeta: { fontSize: 12, color: '#777', marginTop: 2 },
-  expenseAmount: { fontSize: 16, fontWeight: '700', marginRight: 12 },
+  expenseAmount: { fontSize: 16, fontFamily: FONT_SEMIBOLD, marginRight: 12 },
   expectedRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -455,8 +460,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 10,
   },
-  receivedButtonText: { color: '#fff', fontSize: 13, fontWeight: '700' },
-  emptyTitle: { fontSize: 20, fontWeight: '700', marginTop: 16 },
+  receivedButtonText: { color: '#fff', fontSize: 13, fontFamily: FONT_BOLD },
+  emptyTitle: { fontSize: 20, fontFamily: FONT_BOLD, marginTop: 16 },
   emptyText: {
     fontSize: 14,
     color: '#777',
@@ -470,8 +475,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
   },
-  primaryButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  primaryButtonText: { color: '#fff', fontSize: 16, fontFamily: FONT_BOLD },
   footer: { alignItems: 'center', marginTop: 32, marginBottom: 12 },
-  credit: { fontSize: 14, fontWeight: '600', color: '#555' },
+  credit: { fontSize: 14, fontFamily: FONT_SEMIBOLD, color: '#555' },
   creditSub: { fontSize: 12, color: '#999', marginTop: 2 },
 });

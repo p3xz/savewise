@@ -27,6 +27,7 @@ import {
   setSoundEnabled,
 } from '../../lib/sound';
 import { PressFeedback, Tap } from '../../lib/anim';
+import { FONT_BOLD, FONT_MEDIUM, FONT_SEMIBOLD } from '../../lib/fonts';
 import {
   CURRENCY_SYMBOLS,
   DEFAULT_BUDGET,
@@ -342,26 +343,27 @@ export default function Settings() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#ffffff' },
   content: { padding: 20 },
-  heading: { fontSize: 28, fontWeight: '700', marginBottom: 8 },
+  heading: { fontSize: 28, fontFamily: FONT_BOLD, marginBottom: 8 },
   sub: { fontSize: 14, color: '#777', marginBottom: 20 },
-  label: { fontSize: 14, fontWeight: '600', color: '#444', marginBottom: 6 },
+  label: { fontSize: 14, fontFamily: FONT_SEMIBOLD, color: '#444', marginBottom: 6 },
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 12,
     padding: 14,
     fontSize: 18,
+    fontFamily: FONT_SEMIBOLD,
     marginBottom: 16,
   },
   preview: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: FONT_SEMIBOLD,
     color: GREEN,
     marginBottom: 12,
   },
   sectionHeading: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: FONT_BOLD,
     color: '#222',
     marginTop: 12,
     marginBottom: 8,
@@ -376,7 +378,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   currencyChipActive: { backgroundColor: GREEN },
-  currencyChipText: { fontSize: 20, color: '#444' },
+  currencyChipText: { fontSize: 20, fontFamily: FONT_MEDIUM, color: '#444' },
   currencyChipTextActive: { color: '#fff', fontWeight: '700' },
   langChip: {
     paddingHorizontal: 14,
@@ -386,7 +388,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
     marginBottom: 8,
   },
-  langChipText: { fontSize: 14, color: '#444' },
+  langChipText: { fontSize: 14, fontFamily: FONT_MEDIUM, color: '#444' },
   customRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   customInput: { flex: 1, marginBottom: 0, marginRight: 8 },
   customButton: {
@@ -395,7 +397,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
   },
-  customButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  customButtonText: { color: '#fff', fontSize: 16, fontFamily: FONT_BOLD },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -406,7 +408,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   toggleText: { flex: 1, marginRight: 12 },
-  toggleTitle: { fontSize: 15, fontWeight: '600' },
+  toggleTitle: { fontSize: 15, fontFamily: FONT_SEMIBOLD },
   toggleSub: { fontSize: 12, color: '#777', marginTop: 2 },
   primaryButton: {
     backgroundColor: GREEN,
@@ -416,10 +418,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   buttonDisabled: { opacity: 0.6 },
-  primaryButtonText: { color: '#fff', fontSize: 17, fontWeight: '700' },
+  primaryButtonText: { color: '#fff', fontSize: 17, fontFamily: FONT_BOLD },
   dangerButton: { marginTop: 28, alignItems: 'center', padding: 12 },
   dangerText: { color: RED, fontSize: 15, fontWeight: '600' },
   creditBox: { alignItems: 'center', marginTop: 40 },
-  credit: { fontSize: 14, fontWeight: '600', color: '#555' },
+  credit: { fontSize: 14, fontFamily: FONT_SEMIBOLD, color: '#555' },
   creditSub: { fontSize: 12, color: '#999', marginTop: 2 },
 });
