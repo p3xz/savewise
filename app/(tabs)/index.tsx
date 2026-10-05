@@ -24,7 +24,8 @@ import {
   daysRemaining,
   deleteExpense,
   formatDate,
-  formatINR,
+  formatMoney,
+  loadCurrency,
   loadBudget,
   loadExpectedIncome,
   loadExpenses,
@@ -51,18 +52,21 @@ export default function Dashboard() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [expected, setExpected] = useState<ExpectedIncome[]>([]);
+  const [currency, setCurrency] = useState('₹');
 
   const reload = useCallback(async () => {
-    const [b, e, i, x] = await Promise.all([
+    const [b, e, i, x, c] = await Promise.all([
       loadBudget(),
       loadExpenses(),
       loadIncome(),
       loadExpectedIncome(),
+      loadCurrency(),
     ]);
     setBudget(b);
     setExpenses(e);
     setIncomes(i);
     setExpected(x);
+    setCurrency(c);
     setLoading(false);
     refreshDailyReminder();
   }, []);
@@ -155,9 +159,9 @@ export default function Dashboard() {
 
             <View style={styles.goalCard}>
               <Text style={styles.goalLabel}>Savings goal</Text>
-              <Text style={styles.goalSaved}>{formatINR(saved)}</Text>
+              <Text style={styles.goalSaved}>{formatMoney(saved, currency)}</Text>
               <Text style={styles.goalTarget}>
-                saved of {formatINR(budget.savingsGoal)} goal
+                saved of {formatMoney(budget.savingsGoal, currency)} goal
               </Text>
               <View style={styles.goalTrack}>
                 <View
@@ -170,7 +174,7 @@ export default function Dashboard() {
               <Text style={styles.goalStatus}>
                 {goalReached
                   ? 'Goal reached. Keep it up.'
-                  : `${formatINR(budget.savingsGoal - saved)} more to reach your goal`}
+                  : `${formatMoney(budget.savingsGoal - saved, currency)} more to reach your goal`}
               </Text>
             </View>
 
@@ -185,7 +189,7 @@ export default function Dashboard() {
                 <View style={styles.stat}>
                   <Text style={styles.statLabel}>Received</Text>
                   <Text style={[styles.statValue, styles.positive]}>
-                    {formatINR(receivedExpectedTotal)}
+                    {formatMoney(receivedExpectedTotal, currency)}
                   </Text>
                 </View>
                 <View style={styles.stat}>
@@ -196,7 +200,7 @@ export default function Dashboard() {
                       pendingTotal > 0 && styles.negative,
                     ]}
                   >
-                    {formatINR(pendingTotal)}
+                    {formatMoney(pendingTotal, currency)}
                   </Text>
                 </View>
               </View>
@@ -217,7 +221,7 @@ export default function Dashboard() {
                       </Text>
                     </View>
                     <Text style={styles.expenseAmount}>
-                      {formatINR(item.amount)}
+                      {formatMoney(item.amount, currency)}
                     </Text>
                     <TouchableOpacity
                       style={styles.receivedButton}
@@ -234,18 +238,18 @@ export default function Dashboard() {
               <View style={styles.row}>
                 <View style={styles.stat}>
                   <Text style={styles.statLabel}>Total spent</Text>
-                  <Text style={styles.statValue}>{formatINR(spent)}</Text>
+                  <Text style={styles.statValue}>{formatMoney(spent, currency)}</Text>
                 </View>
                 <View style={styles.stat}>
                   <Text style={styles.statLabel}>Total received</Text>
                   <Text style={[styles.statValue, styles.positive]}>
-                    {formatINR(incomeTotal)}
+                    {formatMoney(incomeTotal, currency)}
                   </Text>
                 </View>
                 <View style={styles.stat}>
                   <Text style={styles.statLabel}>Left to spend</Text>
                   <Text style={[styles.statValue, overLimit && styles.negative]}>
-                    {formatINR(leftToSpend)}
+                    {formatMoney(leftToSpend, currency)}
                   </Text>
                 </View>
               </View>
@@ -260,13 +264,13 @@ export default function Dashboard() {
                 />
               </View>
               <Text style={styles.budgetLine}>
-                of {formatINR(limit)} spending limit
+                of {formatMoney(limit, currency)} spending limit
               </Text>
 
               <View style={styles.allowanceBox}>
                 <Text style={styles.allowanceLabel}>Daily allowance</Text>
                 <Text style={styles.allowanceValue}>
-                  {formatINR(allowance)} / day
+                  {formatMoney(allowance, currency)} / day
                 </Text>
                 <Text style={styles.allowanceSub}>
                   {leftDays} {leftDays === 1 ? 'day' : 'days'} left in this
@@ -312,7 +316,7 @@ export default function Dashboard() {
               </Text>
             </View>
             <Text style={styles.expenseAmount}>
-              {formatINR(item.amount)}
+              {formatMoney(item.amount, currency)}
             </Text>
             <TouchableOpacity
               onPress={() => handleDelete(item.id)}

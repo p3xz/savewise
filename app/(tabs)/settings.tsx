@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   Alert,
+  ScrollView,
   StyleSheet,
   Switch,
   Text,
@@ -18,11 +19,14 @@ import {
   refreshDailyReminder,
 } from '../../lib/notifications';
 import {
+  CURRENCY_SYMBOLS,
   DEFAULT_BUDGET,
   clearAll,
-  formatINR,
+  formatMoney,
   loadBudget,
+  loadCurrency,
   saveBudget,
+  saveCurrency,
   startOfToday,
 } from '../../lib/store';
 
@@ -37,6 +41,8 @@ export default function Settings() {
   const [days, setDays] = useState(String(DEFAULT_BUDGET.periodDays));
   const [notifOn, setNotifOn] = useState(true);
   const [reminderOn, setReminderOn] = useState(true);
+  const [currency, setCurrency] = useState('₹');
+  const [customSymbol, setCustomSymbol] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -49,6 +55,7 @@ export default function Settings() {
     });
     isNotificationsEnabled().then(setNotifOn);
     isReminderEnabled().then(setReminderOn);
+    loadCurrency().then(setCurrency);
   }, []);
 
   const parsedAllowance = parseFloat(allowance);
@@ -61,6 +68,19 @@ export default function Settings() {
   const handleToggleNotifications = async (value: boolean) => {
     setNotifOn(value);
     await setNotificationsEnabled(value);
+  };
+
+  const handleSelectCurrency = async (symbol: string) => {
+    setCurrency(symbol);
+    setCustomSymbol('');
+    await saveCurrency(symbol);
+  };
+
+  const handleSaveCustomSymbol = async () => {
+    const value = customSymbol.trim();
+    if (value.length === 0) return;
+    setCurrency(value);
+    await saveCurrency(value);
   };
 
   const handleToggleReminder = async (value: boolean) => {
@@ -130,7 +150,7 @@ export default function Settings() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.heading}>Budget</Text>
         <Text style={styles.sub}>
           Set your monthly allowance and how much of it you want to save.
@@ -168,9 +188,49 @@ export default function Settings() {
 
         {!isNaN(spendingLimitPreview) && spendingLimitPreview > 0 && (
           <Text style={styles.preview}>
-            Spending limit: {formatINR(spendingLimitPreview)} for the period
+            Spending limit: {formatMoney(spendingLimitPreview, currency)} for the period
           </Text>
         )}
+
+        <Text style={styles.sectionHeading}>Currency</Text>
+        <View style={styles.currencyRow}>
+          {CURRENCY_SYMBOLS.map((symbol) => (
+            <TouchableOpacity
+              key={symbol}
+              style={[
+                styles.currencyChip,
+                currency === symbol && styles.currencyChipActive,
+              ]}
+              onPress={() => handleSelectCurrency(symbol)}
+            >
+              <Text
+                style={[
+                  styles.currencyChipText,
+                  currency === symbol && styles.currencyChipTextActive,
+                ]}
+              >
+                {symbol}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View style={styles.customRow}>
+          <TextInput
+            style={[styles.input, styles.customInput]}
+            value={customSymbol}
+            onChangeText={setCustomSymbol}
+            placeholder="Custom symbol"
+            maxLength={3}
+            returnKeyType="done"
+            onSubmitEditing={handleSaveCustomSymbol}
+          />
+          <TouchableOpacity
+            style={styles.customButton}
+            onPress={handleSaveCustomSymbol}
+          >
+            <Text style={styles.customButtonText}>Use</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.toggleRow}>
           <View style={styles.toggleText}>
@@ -218,7 +278,7 @@ export default function Settings() {
           <Text style={styles.credit}>Made with love from Namish</Text>
           <Text style={styles.creditSub}>For personal use</Text>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -243,6 +303,34 @@ const styles = StyleSheet.create({
     color: GREEN,
     marginBottom: 12,
   },
+  sectionHeading: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#222',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  currencyRow: { flexDirection: 'row', marginBottom: 10 },
+  currencyChip: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: '#f0f0f0',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  currencyChipActive: { backgroundColor: GREEN },
+  currencyChipText: { fontSize: 20, color: '#444' },
+  currencyChipTextActive: { color: '#fff', fontWeight: '700' },
+  customRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  customInput: { flex: 1, marginBottom: 0, marginRight: 8 },
+  customButton: {
+    backgroundColor: GREEN,
+    paddingHorizontal: 22,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  customButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',

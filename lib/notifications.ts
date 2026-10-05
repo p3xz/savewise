@@ -5,8 +5,9 @@ import {
   Income,
   daysRemaining,
   dailyAllowance,
-  formatINR,
+  formatMoney,
   loadBudget,
+  loadCurrency,
   loadExpenses,
   loadIncome,
   remainingToSpend,
@@ -67,7 +68,8 @@ export function buildExpenseNotification(
   expense: Expense,
   balance: number,
   spent: number,
-  limit: number
+  limit: number,
+  symbol: string
 ): BuiltNotification {
   const label = expense.note ? `${expense.category} (${expense.note})` : expense.category;
   let pace = '';
@@ -79,18 +81,19 @@ export function buildExpenseNotification(
   }
   return {
     title: 'Expense logged',
-    body: `${formatINR(expense.amount)} spent on ${label}. Balance left: ${formatINR(balance)}.${pace}`,
+    body: `${formatMoney(expense.amount, symbol)} spent on ${label}. Balance left: ${formatMoney(balance, symbol)}.${pace}`,
   };
 }
 
 export function buildIncomeNotification(
   income: Income,
-  balance: number
+  balance: number,
+  symbol: string
 ): BuiltNotification {
   const label = income.note ? `${income.source} (${income.note})` : income.source;
   return {
     title: 'Income received',
-    body: `${formatINR(income.amount)} received from ${label}. Balance left: ${formatINR(balance)}.`,
+    body: `${formatMoney(income.amount, symbol)} received from ${label}. Balance left: ${formatMoney(balance, symbol)}.`,
   };
 }
 
@@ -116,17 +119,22 @@ async function currentBalance(): Promise<number | null> {
 export async function notifyAfterExpense(expense: Expense): Promise<void> {
   const budget = await loadBudget();
   if (!budget) return;
-  const [expenses, incomes] = await Promise.all([loadExpenses(), loadIncome()]);
+  const [expenses, incomes, symbol] = await Promise.all([
+    loadExpenses(),
+    loadIncome(),
+    loadCurrency(),
+  ]);
   const balance = savedSoFar(budget, expenses, incomes);
   const spent = totalSpent(expenses);
   const limit = spendingLimit(budget);
-  await fire(buildExpenseNotification(expense, balance, spent, limit));
+  await fire(buildExpenseNotification(expense, balance, spent, limit, symbol));
 }
 
 export async function notifyAfterIncome(income: Income): Promise<void> {
   const balance = await currentBalance();
   if (balance === null) return;
-  await fire(buildIncomeNotification(income, balance));
+  const symbol = await loadCurrency();
+  await fire(buildIncomeNotification(income, balance, symbol));
 }
 
 export async function isReminderEnabled(): Promise<boolean> {
@@ -156,17 +164,18 @@ export function buildReminderNotification(
   spent: number,
   limit: number,
   leftDays: number,
-  allowance: number
+  allowance: number,
+  symbol: string
 ): BuiltNotification {
   if (spent >= limit && limit > 0) {
     return {
       title: 'Savings check-in',
-      body: `You are over your ${formatINR(limit)} spending limit. Cut back to protect your savings goal.`,
+      body: `You are over your ${formatMoney(limit, symbol)} spending limit. Cut back to protect your savings goal.`,
     };
   }
   return {
     title: 'Savings check-in',
-    body: `Spent ${formatINR(spent)} of ${formatINR(limit)} so far, ${leftDays} ${leftDays === 1 ? 'day' : 'days'} left. You can spend ${formatINR(allowance)} per day.`,
+    body: `Spent ${formatMoney(spent, symbol)} of ${formatMoney(limit, symbol)} so far, ${leftDays} ${leftDays === 1 ? 'day' : 'days'} left. You can spend ${formatMoney(allowance, symbol)} per day.`,
   };
 }
 
@@ -182,7 +191,8 @@ export async function refreshDailyReminder(): Promise<void> {
     const limit = spendingLimit(budget);
     const leftDays = daysRemaining(budget);
     const allowance = dailyAllowance(budget, expenses);
-    const content = buildReminderNotification(spent, limit, leftDays, allowance);
+    const symbol = await loadCurrency();
+    const content = buildReminderNotification(spent, limit, leftDays, allowance, symbol);
     await Notifications.scheduleNotificationAsync({
       content: { title: content.title, body: content.body },
       trigger: {

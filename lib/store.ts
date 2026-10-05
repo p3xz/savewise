@@ -53,6 +53,26 @@ export const DEFAULT_BUDGET: Budget = {
 const EXPENSES_KEY = 'savewise.expenses.v1';
 const INCOME_KEY = 'savewise.income.v1';
 const BUDGET_KEY = 'savewise.budget.v2';
+const CURRENCY_KEY = 'savewise.currency.v1';
+
+export const CURRENCY_SYMBOLS = ['\u20B9', '$', '\u20AC', '\u00A3', '\u00A5'] as const;
+
+export const DEFAULT_CURRENCY = '\u20B9';
+
+export async function loadCurrency(): Promise<string> {
+  try {
+    const raw = await AsyncStorage.getItem(CURRENCY_KEY);
+    if (raw && raw.trim().length > 0) return raw.trim();
+  } catch {
+    // Fall through to the default.
+  }
+  return DEFAULT_CURRENCY;
+}
+
+export async function saveCurrency(symbol: string): Promise<void> {
+  const value = symbol.trim();
+  await AsyncStorage.setItem(CURRENCY_KEY, value.length > 0 ? value : DEFAULT_CURRENCY);
+}
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -323,9 +343,10 @@ export function dailyAllowance(
   return remainingToSpend(budget, expenses) / left;
 }
 
-export function formatINR(amount: number): string {
+export function formatMoney(amount: number, symbol: string = DEFAULT_CURRENCY): string {
   const rounded = Math.round(amount * 100) / 100;
-  return `\u20B9${rounded.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+  const locale = symbol === '\u20B9' ? 'en-IN' : 'en-US';
+  return `${symbol}${rounded.toLocaleString(locale, { maximumFractionDigits: 2 })}`;
 }
 
 export function formatDate(ts: number): string {
