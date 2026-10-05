@@ -19,6 +19,11 @@ import {
   refreshDailyReminder,
 } from '../../lib/notifications';
 import {
+  LANGS,
+  Lang,
+  useLanguage,
+} from '../../lib/i18n';
+import {
   CURRENCY_SYMBOLS,
   DEFAULT_BUDGET,
   clearAll,
@@ -44,6 +49,7 @@ export default function Settings() {
   const [currency, setCurrency] = useState('₹');
   const [customSymbol, setCustomSymbol] = useState('');
   const [saving, setSaving] = useState(false);
+  const { lang, setLang, t } = useLanguage();
 
   useEffect(() => {
     loadBudget().then((b) => {
@@ -93,22 +99,19 @@ export default function Settings() {
     const goalValue = parseFloat(savingsGoal);
     const daysValue = parseInt(days, 10);
     if (isNaN(allowanceValue) || allowanceValue <= 0) {
-      Alert.alert('Invalid allowance', 'Please enter an amount greater than 0.');
+      Alert.alert(t('set.invalidAllowance'), t('set.invalidAllowanceMsg'));
       return;
     }
     if (isNaN(goalValue) || goalValue < 0) {
-      Alert.alert('Invalid goal', 'Please enter a savings goal of 0 or more.');
+      Alert.alert(t('set.invalidGoal'), t('set.invalidGoalMsg'));
       return;
     }
     if (goalValue >= allowanceValue) {
-      Alert.alert(
-        'Invalid goal',
-        'The savings goal must be less than the allowance.'
-      );
+      Alert.alert(t('set.invalidGoal'), t('set.goalTooHigh'));
       return;
     }
     if (isNaN(daysValue) || daysValue <= 0) {
-      Alert.alert('Invalid period', 'Please enter a number of days greater than 0.');
+      Alert.alert(t('set.invalidPeriod'), t('set.invalidPeriodMsg'));
       return;
     }
     setSaving(true);
@@ -120,43 +123,37 @@ export default function Settings() {
         startDate: startOfToday(),
       });
       await refreshDailyReminder();
-      Alert.alert('Saved', 'Your budget period starts today.', [
+      Alert.alert(t('set.saved'), t('set.savedMsg'), [
         { text: 'OK', onPress: () => router.replace('/(tabs)') },
       ]);
     } catch {
-      Alert.alert('Error', 'Could not save the budget. Please try again.');
+      Alert.alert(t('set.error'), t('set.saveFailed'));
     } finally {
       setSaving(false);
     }
   };
 
   const handleReset = () => {
-    Alert.alert(
-      'Reset everything',
-      'This deletes your budget and all expenses. Continue?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            await clearAll();
-            router.replace('/(tabs)');
-          },
+    Alert.alert(t('set.resetTitle'), t('set.resetMsg'), [
+      { text: t('set.cancel'), style: 'cancel' },
+      {
+        text: t('set.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          await clearAll();
+          router.replace('/(tabs)');
         },
-      ]
-    );
+      },
+    ]);
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.heading}>Budget</Text>
-        <Text style={styles.sub}>
-          Set your monthly allowance and how much of it you want to save.
-        </Text>
+        <Text style={styles.heading}>{t('set.title')}</Text>
+        <Text style={styles.sub}>{t('set.sub')}</Text>
 
-        <Text style={styles.label}>Monthly allowance</Text>
+        <Text style={styles.label}>{t('set.allowance')}</Text>
         <TextInput
           style={styles.input}
           value={allowance}
@@ -166,7 +163,7 @@ export default function Settings() {
           returnKeyType="done"
         />
 
-        <Text style={styles.label}>Savings goal per month</Text>
+        <Text style={styles.label}>{t('set.savingsGoal')}</Text>
         <TextInput
           style={styles.input}
           value={savingsGoal}
@@ -176,7 +173,7 @@ export default function Settings() {
           returnKeyType="done"
         />
 
-        <Text style={styles.label}>Period in days</Text>
+        <Text style={styles.label}>{t('set.periodDays')}</Text>
         <TextInput
           style={styles.input}
           value={days}
@@ -188,11 +185,36 @@ export default function Settings() {
 
         {!isNaN(spendingLimitPreview) && spendingLimitPreview > 0 && (
           <Text style={styles.preview}>
-            Spending limit: {formatMoney(spendingLimitPreview, currency)} for the period
+            {t('set.spendingPreview', {
+              amount: formatMoney(spendingLimitPreview, currency),
+            })}
           </Text>
         )}
 
-        <Text style={styles.sectionHeading}>Currency</Text>
+        <Text style={styles.sectionHeading}>{t('set.languageTitle')}</Text>
+        <View style={styles.currencyRow}>
+          {LANGS.map((l) => (
+            <TouchableOpacity
+              key={l.code}
+              style={[
+                styles.langChip,
+                lang === l.code && styles.currencyChipActive,
+              ]}
+              onPress={() => setLang(l.code as Lang)}
+            >
+              <Text
+                style={[
+                  styles.langChipText,
+                  lang === l.code && styles.currencyChipTextActive,
+                ]}
+              >
+                {l.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <Text style={styles.sectionHeading}>{t('set.currencyTitle')}</Text>
         <View style={styles.currencyRow}>
           {CURRENCY_SYMBOLS.map((symbol) => (
             <TouchableOpacity
@@ -219,7 +241,7 @@ export default function Settings() {
             style={[styles.input, styles.customInput]}
             value={customSymbol}
             onChangeText={setCustomSymbol}
-            placeholder="Custom symbol"
+            placeholder={t('set.customSymbolPh')}
             maxLength={3}
             returnKeyType="done"
             onSubmitEditing={handleSaveCustomSymbol}
@@ -228,16 +250,14 @@ export default function Settings() {
             style={styles.customButton}
             onPress={handleSaveCustomSymbol}
           >
-            <Text style={styles.customButtonText}>Use</Text>
+            <Text style={styles.customButtonText}>{t('set.use')}</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.toggleRow}>
           <View style={styles.toggleText}>
-            <Text style={styles.toggleTitle}>Transaction alerts</Text>
-            <Text style={styles.toggleSub}>
-              Notify me on every expense and income
-            </Text>
+            <Text style={styles.toggleTitle}>{t('set.txAlerts')}</Text>
+            <Text style={styles.toggleSub}>{t('set.txAlertsSub')}</Text>
           </View>
           <Switch
             value={notifOn}
@@ -248,10 +268,8 @@ export default function Settings() {
 
         <View style={styles.toggleRow}>
           <View style={styles.toggleText}>
-            <Text style={styles.toggleTitle}>Daily savings reminder</Text>
-            <Text style={styles.toggleSub}>
-              A 9 PM check-in on your spending pace
-            </Text>
+            <Text style={styles.toggleTitle}>{t('set.reminder')}</Text>
+            <Text style={styles.toggleSub}>{t('set.reminderSub')}</Text>
           </View>
           <Switch
             value={reminderOn}
@@ -266,17 +284,17 @@ export default function Settings() {
           disabled={saving}
         >
           <Text style={styles.primaryButtonText}>
-            {saving ? 'Saving...' : 'Start new period'}
+            {saving ? t('set.saving') : t('set.startPeriod')}
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.dangerButton} onPress={handleReset}>
-          <Text style={styles.dangerText}>Reset all data</Text>
+          <Text style={styles.dangerText}>{t('set.resetAll')}</Text>
         </TouchableOpacity>
 
         <View style={styles.creditBox}>
-          <Text style={styles.credit}>Made with love from Namish</Text>
-          <Text style={styles.creditSub}>For personal use</Text>
+          <Text style={styles.credit}>{t('dash.credit')}</Text>
+          <Text style={styles.creditSub}>{t('dash.creditSub')}</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -310,7 +328,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 8,
   },
-  currencyRow: { flexDirection: 'row', marginBottom: 10 },
+  currencyRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10 },
   currencyChip: {
     flex: 1,
     paddingVertical: 12,
@@ -322,6 +340,15 @@ const styles = StyleSheet.create({
   currencyChipActive: { backgroundColor: GREEN },
   currencyChipText: { fontSize: 20, color: '#444' },
   currencyChipTextActive: { color: '#fff', fontWeight: '700' },
+  langChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#f0f0f0',
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  langChipText: { fontSize: 14, color: '#444' },
   customRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   customInput: { flex: 1, marginBottom: 0, marginRight: 8 },
   customButton: {

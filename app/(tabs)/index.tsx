@@ -16,6 +16,11 @@ import {
   refreshDailyReminder,
 } from '../../lib/notifications';
 import {
+  categoryLabel,
+  sourceLabel,
+  useLanguage,
+} from '../../lib/i18n';
+import {
   Budget,
   ExpectedIncome,
   Expense,
@@ -53,6 +58,7 @@ export default function Dashboard() {
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [expected, setExpected] = useState<ExpectedIncome[]>([]);
   const [currency, setCurrency] = useState('₹');
+  const { lang, t } = useLanguage();
 
   const reload = useCallback(async () => {
     const [b, e, i, x, c] = await Promise.all([
@@ -111,15 +117,13 @@ export default function Dashboard() {
     return (
       <SafeAreaView style={styles.center}>
         <Ionicons name="wallet-outline" size={64} color={GREEN} />
-        <Text style={styles.emptyTitle}>No budget set yet</Text>
-        <Text style={styles.emptyText}>
-          Set your monthly allowance and savings goal to start tracking.
-        </Text>
+        <Text style={styles.emptyTitle}>{t('dash.noBudgetTitle')}</Text>
+        <Text style={styles.emptyText}>{t('dash.noBudgetText')}</Text>
         <TouchableOpacity
           style={styles.primaryButton}
           onPress={() => router.push('/(tabs)/settings')}
         >
-          <Text style={styles.primaryButtonText}>Set budget</Text>
+          <Text style={styles.primaryButtonText}>{t('dash.setBudget')}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -155,13 +159,13 @@ export default function Dashboard() {
         }
         ListHeaderComponent={
           <View>
-            <Text style={styles.heading}>Dashboard</Text>
+            <Text style={styles.heading}>{t('dash.title')}</Text>
 
             <View style={styles.goalCard}>
-              <Text style={styles.goalLabel}>Savings goal</Text>
+              <Text style={styles.goalLabel}>{t('dash.savingsGoal')}</Text>
               <Text style={styles.goalSaved}>{formatMoney(saved, currency)}</Text>
               <Text style={styles.goalTarget}>
-                saved of {formatMoney(budget.savingsGoal, currency)} goal
+                {t('dash.savedOf', { goal: formatMoney(budget.savingsGoal, currency) })}
               </Text>
               <View style={styles.goalTrack}>
                 <View
@@ -173,27 +177,29 @@ export default function Dashboard() {
               </View>
               <Text style={styles.goalStatus}>
                 {goalReached
-                  ? 'Goal reached. Keep it up.'
-                  : `${formatMoney(budget.savingsGoal - saved, currency)} more to reach your goal`}
+                  ? t('dash.goalReached')
+                  : t('dash.moreToGo', {
+                      amount: formatMoney(budget.savingsGoal - saved, currency),
+                    })}
               </Text>
             </View>
 
             <View style={styles.card}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Money expected</Text>
+                <Text style={styles.sectionTitle}>{t('dash.expectedTitle')}</Text>
                 <TouchableOpacity onPress={() => router.push('/(tabs)/add')}>
-                  <Text style={styles.addLink}>+ Add</Text>
+                  <Text style={styles.addLink}>{t('dash.add')}</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.row}>
                 <View style={styles.stat}>
-                  <Text style={styles.statLabel}>Received</Text>
+                  <Text style={styles.statLabel}>{t('dash.received')}</Text>
                   <Text style={[styles.statValue, styles.positive]}>
                     {formatMoney(receivedExpectedTotal, currency)}
                   </Text>
                 </View>
                 <View style={styles.stat}>
-                  <Text style={styles.statLabel}>Not received</Text>
+                  <Text style={styles.statLabel}>{t('dash.notReceived')}</Text>
                   <Text
                     style={[
                       styles.statValue,
@@ -205,19 +211,19 @@ export default function Dashboard() {
                 </View>
               </View>
               {pendingExpected.length === 0 ? (
-                <Text style={styles.emptyList}>
-                  Nothing pending. Add money you are waiting on from the +
-                  Add tab.
-                </Text>
+                <Text style={styles.emptyList}>{t('dash.nothingPending')}</Text>
               ) : (
                 pendingExpected.map((item) => (
                   <View key={item.id} style={styles.expectedRow}>
                     <View style={styles.expenseInfo}>
                       <Text style={styles.expenseNote} numberOfLines={1}>
-                        {item.note || item.source}
+                        {item.note || sourceLabel(lang, item.source)}
                       </Text>
                       <Text style={styles.expenseMeta}>
-                        {item.source} | expected {formatDate(item.createdAt)}
+                        {sourceLabel(lang, item.source)} |{' '}
+                        {t('dash.expectedOn', {
+                          date: formatDate(item.createdAt),
+                        })}
                       </Text>
                     </View>
                     <Text style={styles.expenseAmount}>
@@ -227,7 +233,9 @@ export default function Dashboard() {
                       style={styles.receivedButton}
                       onPress={() => handleMarkReceived(item.id)}
                     >
-                      <Text style={styles.receivedButtonText}>Received</Text>
+                      <Text style={styles.receivedButtonText}>
+                        {t('dash.receivedButton')}
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 ))
@@ -237,17 +245,17 @@ export default function Dashboard() {
             <View style={styles.card}>
               <View style={styles.row}>
                 <View style={styles.stat}>
-                  <Text style={styles.statLabel}>Total spent</Text>
+                  <Text style={styles.statLabel}>{t('dash.totalSpent')}</Text>
                   <Text style={styles.statValue}>{formatMoney(spent, currency)}</Text>
                 </View>
                 <View style={styles.stat}>
-                  <Text style={styles.statLabel}>Total received</Text>
+                  <Text style={styles.statLabel}>{t('dash.totalReceived')}</Text>
                   <Text style={[styles.statValue, styles.positive]}>
                     {formatMoney(incomeTotal, currency)}
                   </Text>
                 </View>
                 <View style={styles.stat}>
-                  <Text style={styles.statLabel}>Left to spend</Text>
+                  <Text style={styles.statLabel}>{t('dash.leftToSpend')}</Text>
                   <Text style={[styles.statValue, overLimit && styles.negative]}>
                     {formatMoney(leftToSpend, currency)}
                   </Text>
@@ -264,55 +272,50 @@ export default function Dashboard() {
                 />
               </View>
               <Text style={styles.budgetLine}>
-                of {formatMoney(limit, currency)} spending limit
+                {t('dash.ofLimit', { limit: formatMoney(limit, currency) })}
               </Text>
 
               <View style={styles.allowanceBox}>
-                <Text style={styles.allowanceLabel}>Daily allowance</Text>
+                <Text style={styles.allowanceLabel}>{t('dash.dailyAllowance')}</Text>
                 <Text style={styles.allowanceValue}>
-                  {formatMoney(allowance, currency)} / day
+                  {t('dash.perDay', { amount: formatMoney(allowance, currency) })}
                 </Text>
                 <Text style={styles.allowanceSub}>
-                  {leftDays} {leftDays === 1 ? 'day' : 'days'} left in this
-                  period
+                  {t('dash.daysLeft', {
+                    days: leftDays,
+                    dayWord: t(leftDays === 1 ? 'dash.day' : 'dash.days'),
+                  })}
                 </Text>
               </View>
 
-              {overLimit && (
-                <Text style={styles.warning}>
-                  You are over your spending limit. Your savings goal is at
-                  risk.
-                </Text>
-              )}
+              {overLimit && <Text style={styles.warning}>{t('dash.overLimit')}</Text>}
             </View>
 
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Recent expenses</Text>
+              <Text style={styles.sectionTitle}>{t('dash.recentExpenses')}</Text>
               <TouchableOpacity onPress={() => router.push('/(tabs)/add')}>
-                <Text style={styles.addLink}>+ Add</Text>
+                <Text style={styles.addLink}>{t('dash.add')}</Text>
               </TouchableOpacity>
             </View>
           </View>
         }
         ListEmptyComponent={
-          <Text style={styles.emptyList}>
-            No expenses yet. Tap + Add to log your first one.
-          </Text>
+          <Text style={styles.emptyList}>{t('dash.noExpenses')}</Text>
         }
         ListFooterComponent={
           <View style={styles.footer}>
-            <Text style={styles.credit}>Made with love from Namish</Text>
-            <Text style={styles.creditSub}>For personal use</Text>
+            <Text style={styles.credit}>{t('dash.credit')}</Text>
+            <Text style={styles.creditSub}>{t('dash.creditSub')}</Text>
           </View>
         }
         renderItem={({ item }) => (
           <View style={styles.expenseRow}>
             <View style={styles.expenseInfo}>
               <Text style={styles.expenseNote} numberOfLines={1}>
-                {item.note || item.category}
+                {item.note || categoryLabel(lang, item.category)}
               </Text>
               <Text style={styles.expenseMeta}>
-                {item.category} | {formatDate(item.createdAt)}
+                {categoryLabel(lang, item.category)} | {formatDate(item.createdAt)}
               </Text>
             </View>
             <Text style={styles.expenseAmount}>

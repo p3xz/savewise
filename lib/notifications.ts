@@ -15,6 +15,13 @@ import {
   spendingLimit,
   totalSpent,
 } from './store';
+import {
+  Lang,
+  categoryLabel,
+  loadLanguage,
+  sourceLabel,
+  t,
+} from './i18n';
 
 const ENABLED_KEY = 'savewise.notifications.enabled.v1';
 const ASKED_KEY = 'savewise.notifications.asked.v1';
@@ -69,31 +76,44 @@ export function buildExpenseNotification(
   balance: number,
   spent: number,
   limit: number,
-  symbol: string
+  symbol: string,
+  lang: Lang
 ): BuiltNotification {
-  const label = expense.note ? `${expense.category} (${expense.note})` : expense.category;
+  const cat = categoryLabel(lang, expense.category);
+  const label = expense.note ? `${cat} (${expense.note})` : cat;
   let pace = '';
   const ratio = limit > 0 ? spent / limit : 0;
   if (ratio >= 1) {
-    pace = ' You have crossed your spending limit. Your savings goal is at risk.';
+    pace = t(lang, 'notif.paceOver');
   } else if (ratio >= 0.8) {
-    pace = ' That is over 80% of your spending limit used.';
+    pace = t(lang, 'notif.paceNear');
   }
   return {
-    title: 'Expense logged',
-    body: `${formatMoney(expense.amount, symbol)} spent on ${label}. Balance left: ${formatMoney(balance, symbol)}.${pace}`,
+    title: t(lang, 'notif.expenseTitle'),
+    body: t(lang, 'notif.expenseBody', {
+      amount: formatMoney(expense.amount, symbol),
+      label,
+      balance: formatMoney(balance, symbol),
+      pace,
+    }),
   };
 }
 
 export function buildIncomeNotification(
   income: Income,
   balance: number,
-  symbol: string
+  symbol: string,
+  lang: Lang
 ): BuiltNotification {
-  const label = income.note ? `${income.source} (${income.note})` : income.source;
+  const src = sourceLabel(lang, income.source);
+  const label = income.note ? `${src} (${income.note})` : src;
   return {
-    title: 'Income received',
-    body: `${formatMoney(income.amount, symbol)} received from ${label}. Balance left: ${formatMoney(balance, symbol)}.`,
+    title: t(lang, 'notif.incomeTitle'),
+    body: t(lang, 'notif.incomeBody', {
+      amount: formatMoney(income.amount, symbol),
+      label,
+      balance: formatMoney(balance, symbol),
+    }),
   };
 }
 
@@ -119,22 +139,23 @@ async function currentBalance(): Promise<number | null> {
 export async function notifyAfterExpense(expense: Expense): Promise<void> {
   const budget = await loadBudget();
   if (!budget) return;
-  const [expenses, incomes, symbol] = await Promise.all([
+  const [expenses, incomes, symbol, lang] = await Promise.all([
     loadExpenses(),
     loadIncome(),
     loadCurrency(),
+    loadLanguage(),
   ]);
   const balance = savedSoFar(budget, expenses, incomes);
   const spent = totalSpent(expenses);
   const limit = spendingLimit(budget);
-  await fire(buildExpenseNotification(expense, balance, spent, limit, symbol));
+  await fire(buildExpenseNotification(expense, balance, spent, limit, symbol, lang));
 }
 
 export async function notifyAfterIncome(income: Income): Promise<void> {
   const balance = await currentBalance();
   if (balance === null) return;
-  const symbol = await loadCurrency();
-  await fire(buildIncomeNotification(income, balance, symbol));
+  const [symbol, lang] = await Promise.all([loadCurrency(), loadLanguage()]);
+  await fire(buildIncomeNotification(income, balance, symbol, lang));
 }
 
 export async function isReminderEnabled(): Promise<boolean> {
@@ -165,17 +186,26 @@ export function buildReminderNotification(
   limit: number,
   leftDays: number,
   allowance: number,
-  symbol: string
+  symbol: string,
+  lang: Lang
 ): BuiltNotification {
   if (spent >= limit && limit > 0) {
     return {
-      title: 'Savings check-in',
-      body: `You are over your ${formatMoney(limit, symbol)} spending limit. Cut back to protect your savings goal.`,
+      title: t(lang, 'notif.checkinTitle'),
+      body: t(lang, 'notif.checkinOver', {
+        limit: formatMoney(limit, symbol),
+      }),
     };
   }
   return {
-    title: 'Savings check-in',
-    body: `Spent ${formatMoney(spent, symbol)} of ${formatMoney(limit, symbol)} so far, ${leftDays} ${leftDays === 1 ? 'day' : 'days'} left. You can spend ${formatMoney(allowance, symbol)} per day.`,
+    title: t(lang, 'notif.checkinTitle'),
+    body: t(lang, 'notif.checkinBody', {
+      spent: formatMoney(spent, symbol),
+      limit: formatMoney(limit, symbol),
+      days: leftDays,
+      dayWord: t(lang, leftDays === 1 ? 'dash.day' : 'dash.days'),
+      allowance: formatMoney(allowance, symbol),
+    }),
   };
 }
 
@@ -192,7 +222,8 @@ export async function refreshDailyReminder(): Promise<void> {
     const leftDays = daysRemaining(budget);
     const allowance = dailyAllowance(budget, expenses);
     const symbol = await loadCurrency();
-    const content = buildReminderNotification(spent, limit, leftDays, allowance, symbol);
+    const lang = await loadLanguage();
+    const content = buildReminderNotification(spent, limit, leftDays, allowance, symbol, lang);
     await Notifications.scheduleNotificationAsync({
       content: { title: content.title, body: content.body },
       trigger: {

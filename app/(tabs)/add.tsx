@@ -14,6 +14,11 @@ import {
   notifyAfterIncome,
 } from '../../lib/notifications';
 import {
+  categoryLabel,
+  sourceLabel,
+  useLanguage,
+} from '../../lib/i18n';
+import {
   CATEGORIES,
   Category,
   INCOME_SOURCES,
@@ -34,6 +39,7 @@ export default function AddEntry() {
   const [category, setCategory] = useState<Category>('Food');
   const [source, setSource] = useState<IncomeSource>('Allowance');
   const [saving, setSaving] = useState(false);
+  const { lang, t } = useLanguage();
 
   const isExpense = entryType === 'expense';
   const isExpected = entryType === 'expected';
@@ -41,7 +47,7 @@ export default function AddEntry() {
   const handleSave = async () => {
     const value = parseFloat(amount);
     if (isNaN(value) || value <= 0) {
-      Alert.alert('Invalid amount', 'Please enter an amount greater than 0.');
+      Alert.alert(t('add.invalidAmount'), t('add.invalidAmountMsg'));
       return;
     }
     setSaving(true);
@@ -61,45 +67,49 @@ export default function AddEntry() {
       setSource('Allowance');
       router.replace('/(tabs)');
     } catch {
-      Alert.alert('Error', 'Could not save. Please try again.');
+      Alert.alert(t('add.error'), t('add.saveFailed'));
     } finally {
       setSaving(false);
     }
   };
 
   const typeLabels: Record<EntryType, string> = {
-    expense: 'Expense',
-    income: 'Income',
-    expected: 'Expected',
+    expense: t('add.typeExpense'),
+    income: t('add.typeIncome'),
+    expected: t('add.typeExpected'),
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.heading}>
-          {isExpense ? 'Add expense' : isExpected ? 'Add expected money' : 'Add income'}
+          {isExpense
+            ? t('add.expense')
+            : isExpected
+              ? t('add.expected')
+              : t('add.income')}
         </Text>
 
         <View style={styles.typeRow}>
-          {(['expense', 'income', 'expected'] as EntryType[]).map((t) => (
+          {(['expense', 'income', 'expected'] as EntryType[]).map((type) => (
             <TouchableOpacity
-              key={t}
-              style={[styles.typeButton, entryType === t && styles.typeButtonActive]}
-              onPress={() => setEntryType(t)}
+              key={type}
+              style={[styles.typeButton, entryType === type && styles.typeButtonActive]}
+              onPress={() => setEntryType(type)}
             >
               <Text
                 style={[
                   styles.typeButtonText,
-                  entryType === t && styles.typeButtonTextActive,
+                  entryType === type && styles.typeButtonTextActive,
                 ]}
               >
-                {typeLabels[t]}
+                {typeLabels[type]}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text style={styles.label}>Amount</Text>
+        <Text style={styles.label}>{t('add.amount')}</Text>
         <TextInput
           style={styles.input}
           value={amount}
@@ -109,22 +119,24 @@ export default function AddEntry() {
           returnKeyType="done"
         />
 
-        <Text style={styles.label}>Note</Text>
+        <Text style={styles.label}>{t('add.note')}</Text>
         <TextInput
           style={styles.input}
           value={note}
           onChangeText={setNote}
           placeholder={
             isExpense
-              ? 'What did you spend on?'
+              ? t('add.noteExpensePh')
               : isExpected
-                ? 'Who is supposed to send it?'
-                : 'Where did it come from?'
+                ? t('add.noteExpectedPh')
+                : t('add.noteIncomePh')
           }
           returnKeyType="done"
         />
 
-        <Text style={styles.label}>{isExpense ? 'Category' : 'Source'}</Text>
+        <Text style={styles.label}>
+          {isExpense ? t('add.category') : t('add.source')}
+        </Text>
         <View style={styles.chips}>
           {isExpense
             ? CATEGORIES.map((c) => (
@@ -136,7 +148,7 @@ export default function AddEntry() {
                   <Text
                     style={[styles.chipText, category === c && styles.chipTextActive]}
                   >
-                    {c}
+                    {categoryLabel(lang, c)}
                   </Text>
                 </TouchableOpacity>
               ))
@@ -149,7 +161,7 @@ export default function AddEntry() {
                   <Text
                     style={[styles.chipText, source === s && styles.chipTextActive]}
                   >
-                    {s}
+                    {sourceLabel(lang, s)}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -162,12 +174,12 @@ export default function AddEntry() {
         >
           <Text style={styles.primaryButtonText}>
             {saving
-              ? 'Saving...'
+              ? t('add.saving')
               : isExpense
-                ? 'Save expense'
+                ? t('add.saveExpense')
                 : isExpected
-                  ? 'Save expected'
-                  : 'Save income'}
+                  ? t('add.saveExpected')
+                  : t('add.saveIncome')}
           </Text>
         </TouchableOpacity>
       </View>
