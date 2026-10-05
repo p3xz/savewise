@@ -12,7 +12,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
+  notifyAfterIncome,
+  refreshDailyReminder,
+} from '../../lib/notifications';
+import {
   Budget,
+  ExpectedIncome,
   Expense,
   Income,
   dailyAllowance,
@@ -21,13 +26,17 @@ import {
   formatDate,
   formatINR,
   loadBudget,
+  loadExpectedIncome,
   loadExpenses,
   loadIncome,
+  markExpectedReceived,
   remainingToSpend,
   savedSoFar,
   savingsProgress,
   spendingLimit,
   totalIncome,
+  totalPendingExpected,
+  totalReceivedExpected,
   totalSpent,
 } from '../../lib/store';
 
@@ -41,17 +50,21 @@ export default function Dashboard() {
   const [budget, setBudget] = useState<Budget | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [incomes, setIncomes] = useState<Income[]>([]);
+  const [expected, setExpected] = useState<ExpectedIncome[]>([]);
 
   const reload = useCallback(async () => {
-    const [b, e, i] = await Promise.all([
+    const [b, e, i, x] = await Promise.all([
       loadBudget(),
       loadExpenses(),
       loadIncome(),
+      loadExpectedIncome(),
     ]);
     setBudget(b);
     setExpenses(e);
     setIncomes(i);
+    setExpected(x);
     setLoading(false);
+    refreshDailyReminder();
   }, []);
 
   useEffect(() => {
@@ -73,6 +86,13 @@ export default function Dashboard() {
   const handleDelete = async (id: string) => {
     const next = await deleteExpense(id);
     setExpenses(next);
+  };
+
+  const handleMarkReceived = async (id: string) => {
+    const result = await markExpectedReceived(id);
+    if (!result) return;
+    await notifyAfterIncome(result.income);
+    reload();
   };
 
   if (loading) {
@@ -112,6 +132,9 @@ export default function Dashboard() {
   const goalReached = saved >= budget.savingsGoal;
   const spendProgress = limit > 0 ? Math.min(1, spent / limit) : 0;
   const overLimit = leftToSpend < 0;
+  const pendingExpected = expected.filter((x) => !x.received);
+  const pendingTotal = totalPendingExpected(expected);
+  const receivedExpectedTotal = totalReceivedExpected(expected);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -149,6 +172,62 @@ export default function Dashboard() {
                   ? 'Goal reached. Keep it up.'
                   : `${formatINR(budget.savingsGoal - saved)} more to reach your goal`}
               </Text>
+            </View>
+
+            <View style={styles.card}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Money expected</Text>
+                <TouchableOpacity onPress={() => router.push('/(tabs)/add')}>
+                  <Text style={styles.addLink}>+ Add</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.row}>
+                <View style={styles.stat}>
+                  <Text style={styles.statLabel}>Received</Text>
+                  <Text style={[styles.statValue, styles.positive]}>
+                    {formatINR(receivedExpectedTotal)}
+                  </Text>
+                </View>
+                <View style={styles.stat}>
+                  <Text style={styles.statLabel}>Not received</Text>
+                  <Text
+                    style={[
+                      styles.statValue,
+                      pendingTotal > 0 && styles.negative,
+                    ]}
+                  >
+                    {formatINR(pendingTotal)}
+                  </Text>
+                </View>
+              </View>
+              {pendingExpected.length === 0 ? (
+                <Text style={styles.emptyList}>
+                  Nothing pending. Add money you are waiting on from the +
+                  Add tab.
+                </Text>
+              ) : (
+                pendingExpected.map((item) => (
+                  <View key={item.id} style={styles.expectedRow}>
+                    <View style={styles.expenseInfo}>
+                      <Text style={styles.expenseNote} numberOfLines={1}>
+                        {item.note || item.source}
+                      </Text>
+                      <Text style={styles.expenseMeta}>
+                        {item.source} | expected {formatDate(item.createdAt)}
+                      </Text>
+                    </View>
+                    <Text style={styles.expenseAmount}>
+                      {formatINR(item.amount)}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.receivedButton}
+                      onPress={() => handleMarkReceived(item.id)}
+                    >
+                      <Text style={styles.receivedButtonText}>Received</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))
+              )}
             </View>
 
             <View style={styles.card}>
@@ -334,6 +413,20 @@ const styles = StyleSheet.create({
   expenseNote: { fontSize: 16, fontWeight: '600' },
   expenseMeta: { fontSize: 12, color: '#777', marginTop: 2 },
   expenseAmount: { fontSize: 16, fontWeight: '700', marginRight: 12 },
+  expectedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  receivedButton: {
+    backgroundColor: GREEN,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  receivedButtonText: { color: '#fff', fontSize: 13, fontWeight: '700' },
   emptyTitle: { fontSize: 20, fontWeight: '700', marginTop: 16 },
   emptyText: {
     fontSize: 14,

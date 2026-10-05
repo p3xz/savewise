@@ -144,6 +144,94 @@ export async function deleteIncome(id: string): Promise<Income[]> {
   return next;
 }
 
+export interface ExpectedIncome {
+  id: string;
+  amount: number;
+  note: string;
+  source: IncomeSource;
+  received: boolean;
+  receivedAt: number | null;
+  createdAt: number;
+}
+
+const EXPECTED_KEY = 'savewise.expected.v1';
+
+export async function loadExpectedIncome(): Promise<ExpectedIncome[]> {
+  try {
+    const raw = await AsyncStorage.getItem(EXPECTED_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function saveExpectedIncome(
+  items: ExpectedIncome[]
+): Promise<void> {
+  await AsyncStorage.setItem(EXPECTED_KEY, JSON.stringify(items));
+}
+
+export async function addExpectedIncome(input: {
+  amount: number;
+  note: string;
+  source: IncomeSource;
+}): Promise<ExpectedIncome> {
+  const items = await loadExpectedIncome();
+  const entry: ExpectedIncome = {
+    id: makeId(),
+    amount: input.amount,
+    note: input.note.trim(),
+    source: input.source,
+    received: false,
+    receivedAt: null,
+    createdAt: Date.now(),
+  };
+  await saveExpectedIncome([entry, ...items]);
+  return entry;
+}
+
+export async function markExpectedReceived(
+  id: string
+): Promise<{ items: ExpectedIncome[]; income: Income } | null> {
+  const items = await loadExpectedIncome();
+  const target = items.find((i) => i.id === id);
+  if (!target || target.received) return null;
+  const now = Date.now();
+  const next = items.map((i) =>
+    i.id === id ? { ...i, received: true, receivedAt: now } : i
+  );
+  await saveExpectedIncome(next);
+  const income = await addIncome({
+    amount: target.amount,
+    note: target.note,
+    source: target.source,
+  });
+  return { items: next, income };
+}
+
+export async function deleteExpectedIncome(
+  id: string
+): Promise<ExpectedIncome[]> {
+  const items = await loadExpectedIncome();
+  const next = items.filter((i) => i.id !== id);
+  await saveExpectedIncome(next);
+  return next;
+}
+
+export function totalPendingExpected(items: ExpectedIncome[]): number {
+  return items
+    .filter((i) => !i.received)
+    .reduce((sum, i) => sum + i.amount, 0);
+}
+
+export function totalReceivedExpected(items: ExpectedIncome[]): number {
+  return items
+    .filter((i) => i.received)
+    .reduce((sum, i) => sum + i.amount, 0);
+}
+
 export async function loadBudget(): Promise<Budget | null> {
   try {
     const raw = await AsyncStorage.getItem(BUDGET_KEY);
@@ -168,7 +256,12 @@ export async function saveBudget(budget: Budget): Promise<void> {
 }
 
 export async function clearAll(): Promise<void> {
-  await AsyncStorage.multiRemove([EXPENSES_KEY, INCOME_KEY, BUDGET_KEY]);
+  await AsyncStorage.multiRemove([
+    EXPENSES_KEY,
+    INCOME_KEY,
+    BUDGET_KEY,
+    EXPECTED_KEY,
+  ]);
 }
 
 function startOfDayFrom(ts: number): number {

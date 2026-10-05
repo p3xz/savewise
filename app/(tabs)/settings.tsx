@@ -12,7 +12,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   isNotificationsEnabled,
+  isReminderEnabled,
   setNotificationsEnabled,
+  setReminderEnabled,
+  refreshDailyReminder,
 } from '../../lib/notifications';
 import {
   DEFAULT_BUDGET,
@@ -33,6 +36,7 @@ export default function Settings() {
   );
   const [days, setDays] = useState(String(DEFAULT_BUDGET.periodDays));
   const [notifOn, setNotifOn] = useState(true);
+  const [reminderOn, setReminderOn] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -44,6 +48,7 @@ export default function Settings() {
       }
     });
     isNotificationsEnabled().then(setNotifOn);
+    isReminderEnabled().then(setReminderOn);
   }, []);
 
   const parsedAllowance = parseFloat(allowance);
@@ -56,6 +61,11 @@ export default function Settings() {
   const handleToggleNotifications = async (value: boolean) => {
     setNotifOn(value);
     await setNotificationsEnabled(value);
+  };
+
+  const handleToggleReminder = async (value: boolean) => {
+    setReminderOn(value);
+    await setReminderEnabled(value);
   };
 
   const handleSave = async () => {
@@ -89,6 +99,7 @@ export default function Settings() {
         periodDays: daysValue,
         startDate: startOfToday(),
       });
+      await refreshDailyReminder();
       Alert.alert('Saved', 'Your budget period starts today.', [
         { text: 'OK', onPress: () => router.replace('/(tabs)') },
       ]);
@@ -171,6 +182,20 @@ export default function Settings() {
           <Switch
             value={notifOn}
             onValueChange={handleToggleNotifications}
+            trackColor={{ false: '#ccc', true: GREEN }}
+          />
+        </View>
+
+        <View style={styles.toggleRow}>
+          <View style={styles.toggleText}>
+            <Text style={styles.toggleTitle}>Daily savings reminder</Text>
+            <Text style={styles.toggleSub}>
+              A 9 PM check-in on your spending pace
+            </Text>
+          </View>
+          <Switch
+            value={reminderOn}
+            onValueChange={handleToggleReminder}
             trackColor={{ false: '#ccc', true: GREEN }}
           />
         </View>

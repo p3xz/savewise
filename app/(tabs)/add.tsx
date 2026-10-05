@@ -18,13 +18,14 @@ import {
   Category,
   INCOME_SOURCES,
   IncomeSource,
+  addExpectedIncome,
   addExpense,
   addIncome,
 } from '../../lib/store';
 
 const GREEN = '#1a7f4b';
 
-type EntryType = 'expense' | 'income';
+type EntryType = 'expense' | 'income' | 'expected';
 
 export default function AddEntry() {
   const [entryType, setEntryType] = useState<EntryType>('expense');
@@ -35,6 +36,7 @@ export default function AddEntry() {
   const [saving, setSaving] = useState(false);
 
   const isExpense = entryType === 'expense';
+  const isExpected = entryType === 'expected';
 
   const handleSave = async () => {
     const value = parseFloat(amount);
@@ -47,6 +49,8 @@ export default function AddEntry() {
       if (isExpense) {
         const expense = await addExpense({ amount: value, note, category });
         await notifyAfterExpense(expense);
+      } else if (isExpected) {
+        await addExpectedIncome({ amount: value, note, source });
       } else {
         const income = await addIncome({ amount: value, note, source });
         await notifyAfterIncome(income);
@@ -63,13 +67,21 @@ export default function AddEntry() {
     }
   };
 
+  const typeLabels: Record<EntryType, string> = {
+    expense: 'Expense',
+    income: 'Income',
+    expected: 'Expected',
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.heading}>{isExpense ? 'Add expense' : 'Add income'}</Text>
+        <Text style={styles.heading}>
+          {isExpense ? 'Add expense' : isExpected ? 'Add expected money' : 'Add income'}
+        </Text>
 
         <View style={styles.typeRow}>
-          {(['expense', 'income'] as EntryType[]).map((t) => (
+          {(['expense', 'income', 'expected'] as EntryType[]).map((t) => (
             <TouchableOpacity
               key={t}
               style={[styles.typeButton, entryType === t && styles.typeButtonActive]}
@@ -81,7 +93,7 @@ export default function AddEntry() {
                   entryType === t && styles.typeButtonTextActive,
                 ]}
               >
-                {t === 'expense' ? 'Expense' : 'Income'}
+                {typeLabels[t]}
               </Text>
             </TouchableOpacity>
           ))}
@@ -102,7 +114,13 @@ export default function AddEntry() {
           style={styles.input}
           value={note}
           onChangeText={setNote}
-          placeholder={isExpense ? 'What did you spend on?' : 'Where did it come from?'}
+          placeholder={
+            isExpense
+              ? 'What did you spend on?'
+              : isExpected
+                ? 'Who is supposed to send it?'
+                : 'Where did it come from?'
+          }
           returnKeyType="done"
         />
 
@@ -143,7 +161,13 @@ export default function AddEntry() {
           disabled={saving}
         >
           <Text style={styles.primaryButtonText}>
-            {saving ? 'Saving...' : isExpense ? 'Save expense' : 'Save income'}
+            {saving
+              ? 'Saving...'
+              : isExpense
+                ? 'Save expense'
+                : isExpected
+                  ? 'Save expected'
+                  : 'Save income'}
           </Text>
         </TouchableOpacity>
       </View>
