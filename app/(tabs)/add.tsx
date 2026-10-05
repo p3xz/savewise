@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   Alert,
+  Animated,
   StyleSheet,
   Text,
   TextInput,
@@ -18,6 +19,7 @@ import {
   sourceLabel,
   useLanguage,
 } from '../../lib/i18n';
+import { PressFeedback, useEntrance } from '../../lib/anim';
 import {
   CATEGORIES,
   Category,
@@ -40,6 +42,7 @@ export default function AddEntry() {
   const [source, setSource] = useState<IncomeSource>('Allowance');
   const [saving, setSaving] = useState(false);
   const { lang, t } = useLanguage();
+  const entrance = useEntrance();
 
   const isExpense = entryType === 'expense';
   const isExpected = entryType === 'expected';
@@ -81,7 +84,7 @@ export default function AddEntry() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <Animated.View style={[styles.content, entrance]}>
         <Text style={styles.heading}>
           {isExpense
             ? t('add.expense')
@@ -167,7 +170,7 @@ export default function AddEntry() {
               ))}
         </View>
 
-        <TouchableOpacity
+        <PressFeedback
           style={[styles.primaryButton, saving && styles.buttonDisabled]}
           onPress={handleSave}
           disabled={saving}
@@ -181,8 +184,8 @@ export default function AddEntry() {
                   ? t('add.saveExpected')
                   : t('add.saveIncome')}
           </Text>
-        </TouchableOpacity>
-      </View>
+        </PressFeedback>
+      </Animated.View>
     </SafeAreaView>
   );
 }

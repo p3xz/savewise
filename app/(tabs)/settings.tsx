@@ -23,6 +23,7 @@ import {
   Lang,
   useLanguage,
 } from '../../lib/i18n';
+import { PressFeedback } from '../../lib/anim';
 import {
   CURRENCY_SYMBOLS,
   DEFAULT_BUDGET,
@@ -246,12 +247,12 @@ export default function Settings() {
             returnKeyType="done"
             onSubmitEditing={handleSaveCustomSymbol}
           />
-          <TouchableOpacity
+          <PressFeedback
             style={styles.customButton}
             onPress={handleSaveCustomSymbol}
           >
             <Text style={styles.customButtonText}>{t('set.use')}</Text>
-          </TouchableOpacity>
+          </PressFeedback>
         </View>
 
         <View style={styles.toggleRow}>
@@ -278,7 +279,7 @@ export default function Settings() {
           />
         </View>
 
-        <TouchableOpacity
+        <PressFeedback
           style={[styles.primaryButton, saving && styles.buttonDisabled]}
           onPress={handleSave}
           disabled={saving}
@@ -286,7 +287,7 @@ export default function Settings() {
           <Text style={styles.primaryButtonText}>
             {saving ? t('set.saving') : t('set.startPeriod')}
           </Text>
-        </TouchableOpacity>
+        </PressFeedback>
 
         <TouchableOpacity style={styles.dangerButton} onPress={handleReset}>
           <Text style={styles.dangerText}>{t('set.resetAll')}</Text>

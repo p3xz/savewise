@@ -3,6 +3,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   FlatList,
   RefreshControl,
   StyleSheet,
@@ -20,6 +21,12 @@ import {
   sourceLabel,
   useLanguage,
 } from '../../lib/i18n';
+import {
+  AnimatedAmount,
+  AnimatedBar,
+  PressFeedback,
+  useEntrance,
+} from '../../lib/anim';
 import {
   Budget,
   ExpectedIncome,
@@ -59,6 +66,8 @@ export default function Dashboard() {
   const [expected, setExpected] = useState<ExpectedIncome[]>([]);
   const [currency, setCurrency] = useState('₹');
   const { lang, t } = useLanguage();
+  const goalEntrance = useEntrance(0);
+  const secondEntrance = useEntrance(120);
 
   const reload = useCallback(async () => {
     const [b, e, i, x, c] = await Promise.all([
@@ -119,12 +128,12 @@ export default function Dashboard() {
         <Ionicons name="wallet-outline" size={64} color={GREEN} />
         <Text style={styles.emptyTitle}>{t('dash.noBudgetTitle')}</Text>
         <Text style={styles.emptyText}>{t('dash.noBudgetText')}</Text>
-        <TouchableOpacity
+        <PressFeedback
           style={styles.primaryButton}
           onPress={() => router.push('/(tabs)/settings')}
         >
           <Text style={styles.primaryButtonText}>{t('dash.setBudget')}</Text>
-        </TouchableOpacity>
+        </PressFeedback>
       </SafeAreaView>
     );
   }
@@ -161,20 +170,25 @@ export default function Dashboard() {
           <View>
             <Text style={styles.heading}>{t('dash.title')}</Text>
 
-            <View style={[styles.goalCard, overLimit && styles.goalCardOver]}>
+            <Animated.View
+              style={[styles.goalCard, overLimit && styles.goalCardOver, goalEntrance]}
+            >
               <Text style={[styles.goalLabel, overLimit && styles.goalLabelOver]}>
                 {t('dash.savingsGoal')}
               </Text>
-              <Text style={styles.goalSaved}>{formatMoney(saved, currency)}</Text>
+              <AnimatedAmount
+                value={saved}
+                format={(v) => formatMoney(v, currency)}
+                style={styles.goalSaved}
+              />
               <Text style={[styles.goalTarget, overLimit && styles.goalLabelOver]}>
                 {t('dash.savedOf', { goal: formatMoney(budget.savingsGoal, currency) })}
               </Text>
               <View style={styles.goalTrack}>
-                <View
-                  style={[
-                    styles.goalFill,
-                    { width: `${Math.min(100, goalProgress * 100)}%` },
-                  ]}
+                <AnimatedBar
+                  progress={goalProgress}
+                  color="#ffffff"
+                  height={12}
                 />
               </View>
               <Text style={styles.goalStatus}>
@@ -184,8 +198,9 @@ export default function Dashboard() {
                       amount: formatMoney(budget.savingsGoal - saved, currency),
                     })}
               </Text>
-            </View>
+            </Animated.View>
 
+            <Animated.View style={[secondEntrance]}>
             <View style={styles.card}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>{t('dash.expectedTitle')}</Text>
@@ -231,46 +246,53 @@ export default function Dashboard() {
                     <Text style={styles.expenseAmount}>
                       {formatMoney(item.amount, currency)}
                     </Text>
-                    <TouchableOpacity
+                    <PressFeedback
                       style={styles.receivedButton}
                       onPress={() => handleMarkReceived(item.id)}
                     >
                       <Text style={styles.receivedButtonText}>
                         {t('dash.receivedButton')}
                       </Text>
-                    </TouchableOpacity>
+                    </PressFeedback>
                   </View>
                 ))
               )}
             </View>
+            </Animated.View>
 
             <View style={styles.card}>
               <View style={styles.row}>
                 <View style={styles.stat}>
                   <Text style={styles.statLabel}>{t('dash.totalSpent')}</Text>
-                  <Text style={styles.statValue}>{formatMoney(spent, currency)}</Text>
+                  <AnimatedAmount
+                    value={spent}
+                    format={(v) => formatMoney(v, currency)}
+                    style={styles.statValue}
+                  />
                 </View>
                 <View style={styles.stat}>
                   <Text style={styles.statLabel}>{t('dash.totalReceived')}</Text>
-                  <Text style={[styles.statValue, styles.positive]}>
-                    {formatMoney(incomeTotal, currency)}
-                  </Text>
+                  <AnimatedAmount
+                    value={incomeTotal}
+                    format={(v) => formatMoney(v, currency)}
+                    style={[styles.statValue, styles.positive]}
+                  />
                 </View>
                 <View style={styles.stat}>
                   <Text style={styles.statLabel}>{t('dash.leftToSpend')}</Text>
-                  <Text style={[styles.statValue, overLimit && styles.negative]}>
-                    {formatMoney(leftToSpend, currency)}
-                  </Text>
+                  <AnimatedAmount
+                    value={leftToSpend}
+                    format={(v) => formatMoney(v, currency)}
+                    style={[styles.statValue, overLimit && styles.negative]}
+                  />
                 </View>
               </View>
 
               <View style={styles.progressTrack}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    { width: `${spendProgress * 100}%` },
-                    overLimit && styles.progressOver,
-                  ]}
+                <AnimatedBar
+                  progress={spendProgress}
+                  color={overLimit ? RED : GREEN}
+                  height={10}
                 />
               </View>
               <Text style={styles.budgetLine}>
@@ -367,7 +389,6 @@ const styles = StyleSheet.create({
     marginTop: 14,
     overflow: 'hidden',
   },
-  goalFill: { height: 12, backgroundColor: '#ffffff', borderRadius: 6 },
   goalStatus: { fontSize: 13, color: '#ffffff', marginTop: 10, fontWeight: '600' },
   card: {
     backgroundColor: '#f7faf8',
@@ -388,8 +409,6 @@ const styles = StyleSheet.create({
     marginTop: 14,
     overflow: 'hidden',
   },
-  progressFill: { height: 10, backgroundColor: GREEN, borderRadius: 5 },
-  progressOver: { backgroundColor: RED },
   budgetLine: { fontSize: 13, color: '#777', marginTop: 6 },
   allowanceBox: {
     backgroundColor: LIGHT_GREEN,
