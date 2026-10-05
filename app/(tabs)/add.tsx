@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,7 +18,7 @@ import {
   sourceLabel,
   useLanguage,
 } from '../../lib/i18n';
-import { PressFeedback, useEntrance } from '../../lib/anim';
+import { PressFeedback, Tap, useEntrance } from '../../lib/anim';
 import {
   CATEGORIES,
   Category,
@@ -95,7 +94,7 @@ export default function AddEntry() {
 
         <View style={styles.typeRow}>
           {(['expense', 'income', 'expected'] as EntryType[]).map((type) => (
-            <TouchableOpacity
+            <Tap
               key={type}
               style={[styles.typeButton, entryType === type && styles.typeButtonActive]}
               onPress={() => setEntryType(type)}
@@ -108,7 +107,7 @@ export default function AddEntry() {
               >
                 {typeLabels[type]}
               </Text>
-            </TouchableOpacity>
+            </Tap>
           ))}
         </View>
 
@@ -143,7 +142,7 @@ export default function AddEntry() {
         <View style={styles.chips}>
           {isExpense
             ? CATEGORIES.map((c) => (
-                <TouchableOpacity
+                <Tap
                   key={c}
                   style={[styles.chip, category === c && styles.chipActive]}
                   onPress={() => setCategory(c)}
@@ -153,10 +152,10 @@ export default function AddEntry() {
                   >
                     {categoryLabel(lang, c)}
                   </Text>
-                </TouchableOpacity>
+                </Tap>
               ))
             : INCOME_SOURCES.map((s) => (
-                <TouchableOpacity
+                <Tap
                   key={s}
                   style={[styles.chip, source === s && styles.chipActive]}
                   onPress={() => setSource(s)}
@@ -166,7 +165,7 @@ export default function AddEntry() {
                   >
                     {sourceLabel(lang, s)}
                   </Text>
-                </TouchableOpacity>
+                </Tap>
               ))}
         </View>
 
@@ -174,6 +173,7 @@ export default function AddEntry() {
           style={[styles.primaryButton, saving && styles.buttonDisabled]}
           onPress={handleSave}
           disabled={saving}
+          sound
         >
           <Text style={styles.primaryButtonText}>
             {saving

@@ -8,7 +8,6 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,6 +24,7 @@ import {
   AnimatedAmount,
   AnimatedBar,
   PressFeedback,
+  Tap,
   useEntrance,
 } from '../../lib/anim';
 import {
@@ -204,9 +204,9 @@ export default function Dashboard() {
             <View style={styles.card}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>{t('dash.expectedTitle')}</Text>
-                <TouchableOpacity onPress={() => router.push('/(tabs)/add')}>
+                <Tap onPress={() => router.push('/(tabs)/add')}>
                   <Text style={styles.addLink}>{t('dash.add')}</Text>
-                </TouchableOpacity>
+                </Tap>
               </View>
               <View style={styles.row}>
                 <View style={styles.stat}>
@@ -317,9 +317,9 @@ export default function Dashboard() {
 
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>{t('dash.recentExpenses')}</Text>
-              <TouchableOpacity onPress={() => router.push('/(tabs)/add')}>
+              <Tap onPress={() => router.push('/(tabs)/add')}>
                 <Text style={styles.addLink}>{t('dash.add')}</Text>
-              </TouchableOpacity>
+              </Tap>
             </View>
           </View>
         }
@@ -345,12 +345,9 @@ export default function Dashboard() {
             <Text style={styles.expenseAmount}>
               {formatMoney(item.amount, currency)}
             </Text>
-            <TouchableOpacity
-              onPress={() => handleDelete(item.id)}
-              hitSlop={12}
-            >
+            <Tap onPress={() => handleDelete(item.id)} hitSlop={12}>
               <Ionicons name="trash-outline" size={20} color={RED} />
-            </TouchableOpacity>
+            </Tap>
           </View>
         )}
       />

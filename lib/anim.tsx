@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   ViewStyle,
 } from 'react-native';
+import { playTap } from './sound';
 
 /**
  * Fades a view in while sliding it up slightly on mount.
@@ -120,25 +121,28 @@ export function AnimatedAmount({ value, format, style }: AnimatedAmountProps) {
   return <Text style={style}>{format(display)}</Text>;
 }
 
-interface PressFeedbackProps {
+interface TapProps {
   children: ReactNode;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
   disabled?: boolean;
   hitSlop?: number;
+  /** Play the tap click sound on press. */
+  sound?: boolean;
 }
 
 /**
- * A button wrapper that scales down slightly while pressed,
- * giving tactile feedback on key actions.
+ * A press-down scale wrapper for any tappable element. Optionally plays
+ * a short tap sound when pressed.
  */
-export function PressFeedback({
+export function Tap({
   children,
   onPress,
   style,
   disabled,
   hitSlop,
-}: PressFeedbackProps) {
+  sound = false,
+}: TapProps) {
   const scale = useRef(new Animated.Value(1)).current;
 
   const animateTo = (toValue: number) => {
@@ -150,11 +154,16 @@ export function PressFeedback({
     }).start();
   };
 
+  const handlePress = () => {
+    if (sound) void playTap();
+    onPress?.();
+  };
+
   return (
     <Animated.View style={[style, { transform: [{ scale }] }]}>
       <TouchableOpacity
         activeOpacity={1}
-        onPress={onPress}
+        onPress={handlePress}
         onPressIn={() => animateTo(0.96)}
         onPressOut={() => animateTo(1)}
         disabled={disabled}
@@ -164,4 +173,21 @@ export function PressFeedback({
       </TouchableOpacity>
     </Animated.View>
   );
+}
+
+interface PressFeedbackProps {
+  children: ReactNode;
+  onPress?: () => void;
+  style?: StyleProp<ViewStyle>;
+  disabled?: boolean;
+  hitSlop?: number;
+  sound?: boolean;
+}
+
+/**
+ * A button wrapper that scales down slightly while pressed,
+ * giving tactile feedback on key actions.
+ */
+export function PressFeedback(props: PressFeedbackProps) {
+  return <Tap {...props} />;
 }

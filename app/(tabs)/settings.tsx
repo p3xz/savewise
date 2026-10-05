@@ -7,7 +7,6 @@ import {
   Switch,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -23,7 +22,11 @@ import {
   Lang,
   useLanguage,
 } from '../../lib/i18n';
-import { PressFeedback } from '../../lib/anim';
+import {
+  isSoundEnabled,
+  setSoundEnabled,
+} from '../../lib/sound';
+import { PressFeedback, Tap } from '../../lib/anim';
 import {
   CURRENCY_SYMBOLS,
   DEFAULT_BUDGET,
@@ -47,6 +50,7 @@ export default function Settings() {
   const [days, setDays] = useState(String(DEFAULT_BUDGET.periodDays));
   const [notifOn, setNotifOn] = useState(true);
   const [reminderOn, setReminderOn] = useState(true);
+  const [soundOn, setSoundOn] = useState(true);
   const [currency, setCurrency] = useState('₹');
   const [customSymbol, setCustomSymbol] = useState('');
   const [saving, setSaving] = useState(false);
@@ -62,6 +66,7 @@ export default function Settings() {
     });
     isNotificationsEnabled().then(setNotifOn);
     isReminderEnabled().then(setReminderOn);
+    isSoundEnabled().then(setSoundOn);
     loadCurrency().then(setCurrency);
   }, []);
 
@@ -93,6 +98,11 @@ export default function Settings() {
   const handleToggleReminder = async (value: boolean) => {
     setReminderOn(value);
     await setReminderEnabled(value);
+  };
+
+  const handleToggleSound = async (value: boolean) => {
+    setSoundOn(value);
+    await setSoundEnabled(value);
   };
 
   const handleSave = async () => {
@@ -195,7 +205,7 @@ export default function Settings() {
         <Text style={styles.sectionHeading}>{t('set.languageTitle')}</Text>
         <View style={styles.currencyRow}>
           {LANGS.map((l) => (
-            <TouchableOpacity
+            <Tap
               key={l.code}
               style={[
                 styles.langChip,
@@ -211,14 +221,14 @@ export default function Settings() {
               >
                 {l.label}
               </Text>
-            </TouchableOpacity>
+            </Tap>
           ))}
         </View>
 
         <Text style={styles.sectionHeading}>{t('set.currencyTitle')}</Text>
         <View style={styles.currencyRow}>
           {CURRENCY_SYMBOLS.map((symbol) => (
-            <TouchableOpacity
+            <Tap
               key={symbol}
               style={[
                 styles.currencyChip,
@@ -234,7 +244,7 @@ export default function Settings() {
               >
                 {symbol}
               </Text>
-            </TouchableOpacity>
+            </Tap>
           ))}
         </View>
         <View style={styles.customRow}>
@@ -255,29 +265,56 @@ export default function Settings() {
           </PressFeedback>
         </View>
 
-        <View style={styles.toggleRow}>
+        <Tap
+          style={styles.toggleRow}
+          onPress={() => handleToggleNotifications(!notifOn)}
+          sound
+        >
           <View style={styles.toggleText}>
             <Text style={styles.toggleTitle}>{t('set.txAlerts')}</Text>
             <Text style={styles.toggleSub}>{t('set.txAlertsSub')}</Text>
           </View>
           <Switch
             value={notifOn}
-            onValueChange={handleToggleNotifications}
+            onValueChange={() => {}}
+            pointerEvents="none"
             trackColor={{ false: '#ccc', true: GREEN }}
           />
-        </View>
+        </Tap>
 
-        <View style={styles.toggleRow}>
+        <Tap
+          style={styles.toggleRow}
+          onPress={() => handleToggleReminder(!reminderOn)}
+          sound
+        >
           <View style={styles.toggleText}>
             <Text style={styles.toggleTitle}>{t('set.reminder')}</Text>
             <Text style={styles.toggleSub}>{t('set.reminderSub')}</Text>
           </View>
           <Switch
             value={reminderOn}
-            onValueChange={handleToggleReminder}
+            onValueChange={() => {}}
+            pointerEvents="none"
             trackColor={{ false: '#ccc', true: GREEN }}
           />
-        </View>
+        </Tap>
+
+        <Tap
+          style={styles.toggleRow}
+          onPress={() => handleToggleSound(!soundOn)}
+          sound
+        >
+          <View style={styles.toggleText}>
+            <Text style={styles.toggleTitle}>{t('set.sounds')}</Text>
+            <Text style={styles.toggleSub}>{t('set.soundsSub')}</Text>
+          </View>
+          <Switch
+            value={soundOn}
+            onValueChange={() => {}}
+            pointerEvents="none"
+            trackColor={{ false: '#ccc', true: GREEN }}
+          />
+        </Tap>
 
         <PressFeedback
           style={[styles.primaryButton, saving && styles.buttonDisabled]}
@@ -289,9 +326,9 @@ export default function Settings() {
           </Text>
         </PressFeedback>
 
-        <TouchableOpacity style={styles.dangerButton} onPress={handleReset}>
+        <Tap style={styles.dangerButton} onPress={handleReset}>
           <Text style={styles.dangerText}>{t('set.resetAll')}</Text>
-        </TouchableOpacity>
+        </Tap>
 
         <View style={styles.creditBox}>
           <Text style={styles.credit}>{t('dash.credit')}</Text>
