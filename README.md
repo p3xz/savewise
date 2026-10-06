@@ -1,5 +1,7 @@
 # SaveWise
 
+![Preview](preview.png)
+
 > A minimal personal budget tracker that keeps a monthly allowance on track against a savings goal, with no backend and no login.
 
 ![Status](https://img.shields.io/badge/status-active-brightgreen)
