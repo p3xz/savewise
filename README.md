@@ -1,5 +1,7 @@
 # SaveWise
 
+## What
+
 A minimal personal budget tracker. Set a monthly allowance and a savings
 goal, log expenses and income, and watch your progress toward the goal. The
 spending limit is the allowance minus the savings goal. Everything is stored
@@ -8,12 +10,17 @@ locally on the device with AsyncStorage. No backend, no login.
 Default preset: 5000 monthly allowance, 4000 savings goal, 30 day period,
 which gives a 1000 spending limit.
 
-A local notification fires on every expense and every income logged, showing
-the amount, category or source, note, and updated balance. This can be
-toggled in Budget settings. Notification permission is requested on first
-launch.
+## Why
 
-## Tech Stack
+Built as a personal finance tracker for a simple problem: keeping a monthly
+allowance on track against a savings goal without signing up for yet another
+app with a backend account.
+
+## When
+
+October 2026.
+
+## Tech stack
 
 - Language: TypeScript
 - Framework: React Native (0.86) with Expo (SDK 57)
@@ -22,6 +29,34 @@ launch.
 - Notifications: expo-notifications (transaction alerts, daily reminder, overspend warnings)
 - Sound: expo-audio
 - UI: react-native-safe-area-context, react-native-screens, @expo/vector-icons, Space Grotesk font
+
+## Why we used this
+
+- Expo: build and test an iOS app from any machine, and ship installable
+  builds through GitHub Actions without a Mac or a paid Apple developer account.
+- expo-router: file-based routing with tabs keeps navigation simple in a
+  small multi-screen app.
+- AsyncStorage: local-only storage, so there is no backend or login to build
+  and maintain.
+- expo-notifications: transaction alerts, reminders, and warnings without
+  running a push server.
+- TypeScript: type safety across the whole codebase.
+
+## How it works
+
+- You set a monthly allowance and a savings goal in the Budget tab; the
+  spending limit is the allowance minus the goal.
+- The Add tab logs each expense or income with an amount, note, and category
+  or source. Every write goes to AsyncStorage and fires a local notification
+  with the amount, category or source, note, and updated balance.
+- The Dashboard reads storage whenever the tab is focused and shows savings
+  progress, spending vs limit, a daily allowance, and recent expenses.
+- The daily allowance is dynamic: unspent budget from earlier days grows it,
+  overspending shrinks it, and an under/over pace indicator shows where you
+  stand.
+- A daily 9 PM reminder with live spending pace, plus overspend warnings at
+  80% and 100%, is scheduled with local notifications. All alerts can be
+  toggled in Settings.
 
 ## Screens
 
@@ -37,13 +72,16 @@ launch.
 - Multi-language UI: English, Hindi, Spanish, French, German, Portuguese
 - Currency symbol selector in Settings
 
-## Develop
+## Getting started
 
 ```bash
 npm install
 npx expo start
 npx tsc --noEmit
 ```
+
+Then scan the QR code with the Expo Go app, or run `npm run ios` to build on
+a simulator.
 
 ## iOS build
 
