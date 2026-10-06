@@ -22,6 +22,8 @@ October 2026.
 
 ## Tech stack
 
+![TypeScript](https://skillicons.dev/icons?i=ts) ![Expo](https://skillicons.dev/icons?i=expo) ![React](https://skillicons.dev/icons?i=react) ![iOS](https://skillicons.dev/icons?i=ios) ![Android](https://skillicons.dev/icons?i=android)
+
 - Language: TypeScript
 - Framework: React Native (0.86) with Expo (SDK 57)
 - Routing: expo-router (file-based routing, tabs)
