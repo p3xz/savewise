@@ -186,6 +186,13 @@ export default function AddEntry() {
                   : t('add.saveIncome')}
           </Text>
         </PressFeedback>
+
+        <Tap
+          style={styles.scanLink}
+          onPress={() => router.push('/scan')}
+        >
+          <Text style={styles.scanLinkText}>Scan payment screenshot instead</Text>
+        </Tap>
       </Animated.View>
     </SafeAreaView>
   );
@@ -236,4 +243,6 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.6 },
   primaryButtonText: { color: '#fff', fontSize: 17, fontFamily: FONT_BOLD },
+  scanLink: { paddingVertical: 14, alignItems: 'center' },
+  scanLinkText: { color: GREEN, fontSize: 15, fontFamily: FONT_SEMIBOLD },
 });

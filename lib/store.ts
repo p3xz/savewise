@@ -387,3 +387,19 @@ export function formatDate(ts: number): string {
     month: 'short',
   });
 }
+
+export function monthRange(date: Date = new Date()): { start: number; end: number } {
+  const start = new Date(date.getFullYear(), date.getMonth(), 1);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  end.setHours(23, 59, 59, 999);
+  return { start: start.getTime(), end: end.getTime() };
+}
+
+export function expensesInRange(expenses: Expense[], start: number, end: number): Expense[] {
+  return expenses.filter((e) => e.createdAt >= start && e.createdAt <= end);
+}
+
+export function incomeInRange(incomes: Income[], start: number, end: number): Income[] {
+  return incomes.filter((i) => i.createdAt >= start && i.createdAt <= end);
+}
