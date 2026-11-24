@@ -46,7 +46,7 @@ const RED = '#c0392b';
 
 const SOCIALS: { label: string; url: string }[] = [
   { label: 'GitHub', url: 'https://github.com/p3xz' },
-  { label: 'LinkedIn', url: 'https://linkedin.com/in/namish-yadav-639769408' },
+  { label: 'LinkedIn', url: 'https://linkedin.com/in/namishyadav' },
   { label: 'Instagram', url: 'https://instagram.com/nam7sh' },
   { label: 'Portfolio', url: 'https://namishhh.vercel.app' },
 ];
